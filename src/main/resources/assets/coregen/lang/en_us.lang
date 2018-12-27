@@ -1,0 +1,6 @@
+#en_US
+
+cmd.cg.usage=Generate stuff!
+
+cmd.cg.script.usage=Runs a Javascript file
+cmd.cg.script=%s

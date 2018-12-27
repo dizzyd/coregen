@@ -1,0 +1,16 @@
+[
+{
+  "modid": "coregen",
+  "name": "CoreGen",
+  "description": "Ore Generation Mod",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["dizzydizzyd"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
