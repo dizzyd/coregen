@@ -97,20 +97,24 @@ public class WorldData extends WorldSavedData {
         return data;
     }
 
-    public static void addDeposit(World world, String depositId, int cx, int cz) {
+    public static synchronized void addDeposit(World world, String depositId, int cx, int cz) {
         WorldData wd = load(world);
         wd.deposits = wd.deposits.add(depositId, Geometries.point(cx, cz));
         wd.markDirty();
     }
 
-    public static boolean depositInDistance(World world, String depositId, int cx, int cz, int distance) {
+    public static synchronized boolean depositInDistance(World world, String depositId, int cx, int cz, int distance) {
         WorldData wd = load(world);
-        return wd.deposits.search(Geometries.point(cx, cz), distance).count().toBlocking().single() > 0;
+        return wd.deposits.search(Geometries.point(cx, cz), distance).
+                filter(entry -> depositId.equals(entry.value())).
+                count().toBlocking().single() > 0;
     }
 
-    public static Point nearestDeposit(World world, String depositId, int cx, int cz) {
+    public static synchronized Point nearestDeposit(World world, String depositId, int cx, int cz) {
         WorldData wd = load(world);
-        Entry<String, Point> pt = wd.deposits.nearest(Geometries.point(cx, cz), 1000, 1).firstOrDefault(null).toBlocking().single();
+        Entry<String, Point> pt = wd.deposits.nearest(Geometries.point(cx, cz), 1000, 1).
+                filter(entry -> depositId.equals(entry.value())).
+                firstOrDefault(null).toBlocking().single();
         if (pt == null) {
             return null;
         }

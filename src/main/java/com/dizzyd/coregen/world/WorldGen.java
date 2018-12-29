@@ -19,6 +19,7 @@ package com.dizzyd.coregen.world;
 
 import com.dizzyd.coregen.CoreGen;
 import com.dizzyd.coregen.config.Deposit;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -31,25 +32,19 @@ public class WorldGen implements IWorldGenerator {
     @Override
     public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
         // Walk through each deposit in the config
-        int sample = ThreadLocalRandom.current().nextInt(100);
         for (Deposit d : CoreGen.config.getDeposits().values())
         {
             // If the sample is greater than the chance of the chunk, no generation will be attempted
+            int sample = random.nextInt(100);
             if (sample > d.getChunkChance()) {
                 continue;
             }
 
-            // Generation _is_ being attempted; check for a min-distance restriction to see if this deposit
-            // is outside the range of any other deposits
-            int minDepositDistance = d.getRestrictions().getMinDepositDistance();
-            if (minDepositDistance > 0 && WorldData.depositInDistance(world, d.getId(), chunkX, chunkZ, minDepositDistance)) {
-                continue;
+            // Do generation; if it succeeds, add a deposit to the world data so restrictions can be enforced
+            if (d.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider, false)) {
+                CoreGen.logger.info("Adding {} to {}, {}", d.getId(), chunkX, chunkZ);
+                WorldData.addDeposit(world, d.getId(), chunkX, chunkZ);
             }
-
-            // Ok - clear to generate!
-            WorldData.addDeposit(world, d.getId(), chunkX, chunkZ);
-            d.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider);
-            CoreGen.logger.info("Creating deposit {} at {}, {}", d.getId(), chunkX, chunkZ);
         }
     }
 }

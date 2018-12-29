@@ -19,22 +19,23 @@ package com.dizzyd.coregen.feature;
 
 import com.dizzyd.coregen.CoreGen;
 
+import jdk.nashorn.api.scripting.NashornScriptEngine;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
+import org.apache.logging.log4j.core.Core;
 
-import javax.script.Bindings;
-import javax.script.CompiledScript;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
+import javax.script.*;
 import java.util.Random;
 
 public class ScriptFeature extends Feature {
     private CompiledScript script;
-    private Bindings bindings = new SimpleBindings();
     private int errorCount = 0;
 
+    private ThreadLocal<Bindings> localBindings = new ThreadLocal<>();
+
     private String filename;
+
 
     public ScriptFeature() {
     }
@@ -47,7 +48,7 @@ public class ScriptFeature extends Feature {
         this.filename = filename;
 
         // Try to load/compile the script
-        script = CoreGen.scriptEngine.compile(filename);
+        script = CoreGen.scriptUtil.compile(filename);
     }
 
     @Override
@@ -55,6 +56,14 @@ public class ScriptFeature extends Feature {
 
         if (script == null) {
             return;
+        }
+
+        // The ScriptEngine and CompiledScript are thread-safe, but bindings are most definitely not;
+        // saw a lot of random hangs in initial development because of this. To avoid per-chunk Binding object
+        // creation, we cache the bindings in thread-local variables
+        Bindings bindings = localBindings.get();
+        if (bindings == null) {
+            bindings = script.getEngine().createBindings();
         }
 
         bindings.put("blockList", this.blocks);
@@ -65,12 +74,16 @@ public class ScriptFeature extends Feature {
         bindings.put("chunkGen", chunkGenerator);
         bindings.put("chunkProvider", chunkProvider);
 
+        localBindings.set(bindings);
+
         // Evaluate the compiled script. We do track sequential failures to avoid spamming the engine
         // and the console. The errorCount is reset on each successful run and incremented on each failed
-        // run, such that after 4 sequential errors, it will disable the chunk generator completely.
+        // run, such that after ~4 sequential errors, it will disable the chunk generator completely.
         try {
+            CoreGen.logger.info("Starting generation..");
             script.eval(bindings);
             errorCount = 0; // Successful invocation, reset error counter
+            CoreGen.logger.info("Ending generation.");
         } catch (ScriptException e) {
             CoreGen.logger.error("Failed to generate chunk {}, {} using {}: {}", chunkX, chunkZ, filename, e.getMessage());
             if (errorCount < 3) {

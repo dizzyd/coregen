@@ -17,7 +17,7 @@
 
 package com.dizzyd.coregen;
 
-import com.dizzyd.coregen.script.ScriptEngine;
+import com.dizzyd.coregen.util.ScriptUtil;
 import com.dizzyd.coregen.world.WorldGen;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.terraingen.OreGenEvent;
@@ -31,6 +31,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+
 @Mod(modid = CoreGen.MODID, name = CoreGen.NAME, version = CoreGen.VERSION)
 public class CoreGen
 {
@@ -40,14 +42,17 @@ public class CoreGen
 
     public static Logger logger;
     public static Config config;
-    public static ScriptEngine scriptEngine;
+    public static ScriptUtil scriptUtil;
+
+    private static File configDirectory;
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event)
     {
         logger = event.getModLog();
-        scriptEngine = new ScriptEngine();
-        config = new Config(event.getModConfigurationDirectory());
+        scriptUtil = new ScriptUtil();
+        configDirectory = event.getModConfigurationDirectory();
+        config = new Config(configDirectory);
     }
 
     @EventHandler
@@ -78,5 +83,9 @@ public class CoreGen
             default:
                 break;
         }
+    }
+
+    public static void reloadConfig() {
+        config = new Config(configDirectory);
     }
 }

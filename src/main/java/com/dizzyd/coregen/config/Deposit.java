@@ -17,7 +17,9 @@
 
 package com.dizzyd.coregen.config;
 
+import com.dizzyd.coregen.CoreGen;
 import com.dizzyd.coregen.feature.Feature;
+import com.dizzyd.coregen.world.WorldData;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -60,9 +62,28 @@ public class Deposit {
         features.add(f);
     }
 
-    public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+    public boolean generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider, boolean force) {
+        if (!force && !canGenerate(world, chunkX, chunkZ)) {
+            return false;
+        }
+
+        CoreGen.logger.info("Creating deposit {} at {}, {}", id, chunkX, chunkZ);
+
         for (Feature f : features) {
             f.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider);
         }
+
+        return true;
+    }
+
+    private boolean canGenerate(World world, int chunkX, int chunkZ) {
+        // Check for a min-distance restriction to see if this deposit
+        // is outside the range of any other deposits
+        int minDepositDistance = restrictions.getMinDepositDistance();
+        if (minDepositDistance > 0 && WorldData.depositInDistance(world, id, chunkX, chunkZ, minDepositDistance)) {
+            return false;
+        }
+
+        return true;
     }
 }

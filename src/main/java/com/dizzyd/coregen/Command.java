@@ -17,10 +17,12 @@
 
 package com.dizzyd.coregen;
 
+import com.dizzyd.coregen.config.Deposit;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.World;
 import net.minecraftforge.server.command.CommandTreeBase;
 
 public class Command extends CommandTreeBase {
@@ -36,6 +38,17 @@ public class Command extends CommandTreeBase {
 
     public Command() {
         addSubcommand(new CommandScript());
+        addSubcommand(new GenerateDeposit());
+        addSubcommand(new ReloadConfig());
+    }
+
+    private static String getArg(ICommandSender sender, CommandBase cmd, String[] args, int id, String errorKey) {
+        if (args.length > id) {
+            return args[id];
+        } else {
+            Command.notifyCommandListener(sender, cmd, errorKey);
+            return null;
+        }
     }
 
     public static class CommandScript extends CommandBase {
@@ -53,8 +66,54 @@ public class Command extends CommandTreeBase {
         public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
             String scriptName = args[0];
 
-            String status = CoreGen.scriptEngine.run(scriptName, sender.getEntityWorld(), sender.getPosition());
+            String status = CoreGen.scriptUtil.run(scriptName, sender.getEntityWorld(), sender.getPosition());
             Command.notifyCommandListener(sender, this, "cmd.cg.script", status);
+        }
+    }
+
+    public static class GenerateDeposit extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "deposit";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.deposit.usage";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            String depositId = getArg(sender, this, args, 0, "cmd.cg.deposit.missing.deposit");
+            Deposit deposit = CoreGen.config.getDeposits().get(depositId);
+            if (deposit == null) {
+                Command.notifyCommandListener(sender, this, "cmd.cg.deposit.unknown.deposit", depositId);
+            }
+
+            World world = sender.getEntityWorld();
+            int cx = sender.getPosition().getX() >> 4;
+            int cz = sender.getPosition().getZ() >> 4;
+            deposit.generate(world.rand, cx, cz, world, null, world.getChunkProvider(), true);
+        }
+    }
+
+    public static class ReloadConfig extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "reload";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "return cmd.cg.reload";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            CoreGen.reloadConfig();
+            Command.notifyCommandListener(sender, this, "cmd.cg.config.reload");
         }
     }
 

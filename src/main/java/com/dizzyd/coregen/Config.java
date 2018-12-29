@@ -19,10 +19,12 @@ package com.dizzyd.coregen;
 
 import com.dizzyd.coregen.config.Deposit;
 import com.dizzyd.coregen.feature.ScriptFeature;
+import com.dizzyd.coregen.feature.SeamFeature;
 import com.dizzyd.coregen.util.WeightedBlockList;
 import com.typesafe.config.*;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,19 +32,24 @@ import java.util.Map;
 public class Config {
 
     static com.typesafe.config.Config defaultDeposit;
+    static com.typesafe.config.Config defaultRoot;
 
     static {
         HashMap<String, Object> defaults = new HashMap<String, Object>();
         defaults.put("chunk-chance", 100);
         defaults.put("restrictions.min-deposit-distance", 0);
-
         defaultDeposit = ConfigFactory.parseMap(defaults);
+
+        defaults = new HashMap<String, Object>();
+        defaults.put("deposits", new ArrayList<ConfigValue>());
+        defaultRoot = ConfigFactory.parseMap(defaults);
     }
 
     private Map<String, Deposit> deposits = new HashMap<String, Deposit>();
 
     public Config(File configDir) {
         com.typesafe.config.Config cfg = ConfigFactory.parseFile(new File(configDir, "coregen.conf"));
+        cfg = cfg.withFallback(defaultRoot);
         for (ConfigValue v : cfg.getList("deposits")) {
 
             // Construct base deposit object from config
@@ -57,9 +64,14 @@ public class Config {
 
                 switch (featureCfg.getString("type")) {
                     case "script":
-                        ScriptFeature f = ConfigBeanFactory.create(featureCfg, ScriptFeature.class);
-                        f.initBlocks(blocks);
-                        deposit.addFeature(f);
+                        ScriptFeature script = ConfigBeanFactory.create(featureCfg, ScriptFeature.class);
+                        script.initBlocks(blocks);
+                        deposit.addFeature(script);
+                        break;
+                    case "seam":
+                        SeamFeature seam = ConfigBeanFactory.create(featureCfg, SeamFeature.class);
+                        seam.initBlocks(blocks);
+                        deposit.addFeature(seam);
                         break;
                 }
             }
