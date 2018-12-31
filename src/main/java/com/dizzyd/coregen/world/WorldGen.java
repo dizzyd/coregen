@@ -19,14 +19,12 @@ package com.dizzyd.coregen.world;
 
 import com.dizzyd.coregen.CoreGen;
 import com.dizzyd.coregen.config.Deposit;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.fml.common.IWorldGenerator;
 
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class WorldGen implements IWorldGenerator {
     @Override
@@ -42,7 +40,6 @@ public class WorldGen implements IWorldGenerator {
 
             // Do generation; if it succeeds, add a deposit to the world data so restrictions can be enforced
             if (d.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider, false)) {
-                CoreGen.logger.info("Adding {} to {}, {}", d.getId(), chunkX, chunkZ);
                 WorldData.addDeposit(world, d.getId(), chunkX, chunkZ);
             }
         }
