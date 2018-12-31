@@ -21,7 +21,13 @@ import com.dizzyd.coregen.config.Deposit;
 import com.dizzyd.coregen.feature.ScriptFeature;
 import com.dizzyd.coregen.feature.SeamFeature;
 import com.dizzyd.coregen.util.WeightedBlockList;
-import com.typesafe.config.*;
+import com.dizzyd.coregen.ylevel.YLevelDistribution;
+import com.dizzyd.coregen.ylevel.YLevelGaussian;
+import com.dizzyd.coregen.ylevel.YLevelUniform;
+import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigObject;
+import com.typesafe.config.ConfigValue;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -36,8 +42,10 @@ public class Config {
 
     static {
         HashMap<String, Object> defaults = new HashMap<String, Object>();
-        defaults.put("chunk-chance", 100);
+        defaults.put("enabled", true);
         defaults.put("restrictions.min-deposit-distance", 0);
+        defaults.put("restrictions.biomes", new ArrayList<String>());
+        defaults.put("restrictions.dimensions", new ArrayList<Integer>());
         defaultDeposit = ConfigFactory.parseMap(defaults);
 
         defaults = new HashMap<String, Object>();
@@ -62,19 +70,25 @@ public class Config {
                 // Get the list of blocks to generate and turn it into a weighted list
                 WeightedBlockList blocks = getWeightedBlocks(featureCfg);
 
+                // Get the y-level controller
+                YLevelDistribution dist = getYLevelDist(featureCfg.getConfig("y-level"));
+
                 switch (featureCfg.getString("type")) {
                     case "script":
                         ScriptFeature script = ConfigBeanFactory.create(featureCfg, ScriptFeature.class);
-                        script.initBlocks(blocks);
+                        script.init(blocks, dist);
                         deposit.addFeature(script);
                         break;
                     case "seam":
                         SeamFeature seam = ConfigBeanFactory.create(featureCfg, SeamFeature.class);
-                        seam.initBlocks(blocks);
+                        seam.init(blocks, dist);
                         deposit.addFeature(seam);
                         break;
                 }
             }
+
+            // Make sure restrictions have had a chance to initialize
+            deposit.getRestrictions().prepare();
         }
     }
 
@@ -102,5 +116,15 @@ public class Config {
         }
 
         return result;
+    }
+
+    private YLevelDistribution getYLevelDist(com.typesafe.config.Config cfg) {
+        switch(cfg.getString("type")) {
+            case "gaussian":
+                return ConfigBeanFactory.create(cfg, YLevelGaussian.class);
+            case "uniform":
+                return ConfigBeanFactory.create(cfg, YLevelUniform.class);
+        }
+        return null;
     }
 }

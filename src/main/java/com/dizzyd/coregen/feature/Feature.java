@@ -18,6 +18,7 @@
 package com.dizzyd.coregen.feature;
 
 import com.dizzyd.coregen.util.WeightedBlockList;
+import com.dizzyd.coregen.ylevel.YLevelDistribution;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -27,6 +28,7 @@ import java.util.Random;
 public abstract class Feature {
     protected String type;
     protected WeightedBlockList blocks;
+    protected YLevelDistribution ydist;
 
     public String getType() {
         return type;
@@ -36,8 +38,9 @@ public abstract class Feature {
         this.type = type;
     }
 
-    public void initBlocks(WeightedBlockList blocks) {
+    public void init(WeightedBlockList blocks, YLevelDistribution dist) {
         this.blocks = blocks;
+        this.ydist = dist;
     }
 
     public abstract void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider);

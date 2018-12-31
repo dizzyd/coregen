@@ -17,7 +17,6 @@
 
 package com.dizzyd.coregen.config;
 
-import com.dizzyd.coregen.CoreGen;
 import com.dizzyd.coregen.feature.Feature;
 import com.dizzyd.coregen.world.WorldData;
 import net.minecraft.world.World;
@@ -33,6 +32,15 @@ public class Deposit {
     private int chunkChance;
     private Restrictions restrictions;
     private List<Feature> features = new ArrayList<Feature>();
+    private boolean enabled;
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     public int getChunkChance() {
         return chunkChance;
@@ -63,11 +71,9 @@ public class Deposit {
     }
 
     public boolean generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider, boolean force) {
-        if (!force && !canGenerate(world, chunkX, chunkZ)) {
+        if (!force && !canGenerate(world, chunkX, chunkZ, chunkProvider)) {
             return false;
         }
-
-        CoreGen.logger.info("Creating deposit {} at {}, {}", id, chunkX, chunkZ);
 
         for (Feature f : features) {
             f.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider);
@@ -76,7 +82,24 @@ public class Deposit {
         return true;
     }
 
-    private boolean canGenerate(World world, int chunkX, int chunkZ) {
+    private boolean canGenerate(World world, int chunkX, int chunkZ, IChunkProvider chunkProvider) {
+        // If this deposit is not enabled, don't allow it to generate automatically
+        // N.B. if the deposit generation is being forced this flag will be ignored
+        if (!enabled) {
+            return false;
+        }
+
+        // Check dimension restrictions
+        if (!restrictions.isValidDimension(world.provider.getDimension())) {
+            return false;
+        }
+
+        // Check biome restrictions on this chunk; note that we only check to see if ANY biomes
+        // in this chunk are allowed for generation.
+        if (!restrictions.hasValidBiomes(chunkProvider.getLoadedChunk(chunkX, chunkZ))) {
+            return false;
+        }
+
         // Check for a min-distance restriction to see if this deposit
         // is outside the range of any other deposits
         int minDepositDistance = restrictions.getMinDepositDistance();
