@@ -18,12 +18,24 @@
 package com.dizzyd.coregen;
 
 import com.dizzyd.coregen.config.Deposit;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.init.Blocks;
+import net.minecraft.network.play.server.SPacketChunkData;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.PlayerChunkMap;
+import net.minecraft.server.management.PlayerChunkMapEntry;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.server.command.CommandTreeBase;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class Command extends CommandTreeBase {
     @Override
@@ -40,13 +52,13 @@ public class Command extends CommandTreeBase {
         addSubcommand(new CommandScript());
         addSubcommand(new GenerateDeposit());
         addSubcommand(new ReloadConfig());
+        addSubcommand(new ClearBlocks());
     }
 
-    private static String getArg(ICommandSender sender, CommandBase cmd, String[] args, int id, String errorKey) {
+    private static String getArg(String[] args, int id) {
         if (args.length > id) {
             return args[id];
         } else {
-            Command.notifyCommandListener(sender, cmd, errorKey);
             return null;
         }
     }
@@ -85,7 +97,13 @@ public class Command extends CommandTreeBase {
 
         @Override
         public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-            String depositId = getArg(sender, this, args, 0, "cmd.cg.deposit.missing.deposit");
+            String depositId = getArg(args, 0);
+            String reload = getArg(args, 1);
+
+            if (reload != null) {
+                CoreGen.reloadConfig();
+            }
+
             Deposit deposit = CoreGen.config.getDeposits().get(depositId);
             if (deposit == null) {
                 Command.notifyCommandListener(sender, this, "cmd.cg.deposit.unknown.deposit", depositId);
@@ -114,6 +132,65 @@ public class Command extends CommandTreeBase {
         public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
             CoreGen.reloadConfig();
             Command.notifyCommandListener(sender, this, "cmd.cg.config.reload");
+        }
+    }
+
+    public static class ClearBlocks extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "clear";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.clear";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            int radius = CommandBase.parseInt(args[0]);
+            Block blockType = CommandBase.getBlockByText(sender, args[1]);
+
+            BlockPos playerPos = sender.getPosition();
+
+            World world = sender.getEntityWorld();
+            if (world.isRemote) {
+                return;
+            }
+
+            int count = 0;
+            Set<Chunk> chunks = new HashSet<Chunk>();
+
+            // Identify all block positions in the provided radius
+            Iterable<BlockPos> blockPositions = BlockPos.getAllInBox(playerPos.getX() - radius, playerPos.getY() - radius, playerPos.getZ() - radius,
+                    playerPos.getX() + radius, playerPos.getY() + radius, playerPos.getZ() + radius);
+
+            // For each block in the radius, get the associated chunk, change the block state
+            // directly in chunk and save chunk for further processing. This side steps any
+            // neighbor notifications and allow us to avoid generating a large cascade of block updates
+            for (BlockPos p : blockPositions) {
+                IBlockState b = sender.getEntityWorld().getBlockState(p);
+                if (blockType.equals(b.getBlock())) {
+                    Chunk chunk = world.getChunkFromBlockCoords(p);
+                    chunk.setBlockState(p, Blocks.AIR.getDefaultState());
+                    chunks.add(chunk);
+                    count++;
+                }
+            }
+
+            // Walk over the set of chunks and generate a chunk refresh manually; this batches all
+            // the updates and ensures no block update notification
+            PlayerChunkMap manager = ((WorldServer) world).getPlayerChunkMap();
+            for (Chunk c : chunks) {
+                PlayerChunkMapEntry watcher = manager.getEntry(c.x, c.z);
+                if (watcher != null) {
+                    watcher.sendPacket(new SPacketChunkData(c, -1));
+                }
+            }
+
+            Command.notifyCommandListener(sender, this, "cmd.cg.clear.ok", count);
+
         }
     }
 
