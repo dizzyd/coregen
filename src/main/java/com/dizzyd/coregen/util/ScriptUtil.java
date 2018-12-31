@@ -17,16 +17,7 @@
 
 package com.dizzyd.coregen.util;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
-import javax.script.*;
-
 import com.dizzyd.coregen.CoreGen;
-
 import jdk.nashorn.api.scripting.NashornScriptEngine;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -34,6 +25,13 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+
+import javax.script.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class ScriptUtil {
 
