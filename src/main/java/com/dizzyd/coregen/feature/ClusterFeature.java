@@ -16,6 +16,7 @@
 // ***************************************************************************
 package com.dizzyd.coregen.feature;
 
+import com.dizzyd.coregen.CoreGen;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
@@ -23,7 +24,7 @@ import net.minecraft.world.gen.IChunkGenerator;
 
 import java.util.Random;
 
-public class SeamFeature extends Feature {
+public class ClusterFeature extends Feature {
     private int count;
     private int variance;
 
@@ -43,36 +44,43 @@ public class SeamFeature extends Feature {
         this.variance = variance;
     }
 
-    @Override
-    public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
-        // Choose deposit size; normally distributed around count w/ variance
-        int size = (int)(count + (random.nextGaussian() * variance));
+    protected void generate(Random random, BlockPos pos, World world, int yawDeg, int pitchDeg, double wfactor, double lfactor, double hfactor) {
+        double yaw = Math.toRadians(yawDeg);
+        double pitch = Math.toRadians(pitchDeg);
 
-        double side = Math.cbrt(size);
-        int width  = (int) Math.ceil(side * 2.0);
-        int length = (int) Math.ceil(side / 2.0);
+        int size = (int) (count + (random.nextGaussian() * variance));
+
+        int width = (int) Math.floor(Math.pow(size, wfactor));
+        int length = (int) Math.floor(Math.pow(size, lfactor));
+        int height = (int) Math.ceil(Math.pow(size, hfactor));
 
         int total = 0;
 
-        // Choose a random x/z in the chunk
-        double yaw = Math.toRadians(random.nextInt(360));
-        double pitch = Math.toRadians(300 + random.nextInt(40)); // Slant down; from 300 - 340
-
-        BlockPos pos = new BlockPos((chunkX * 16 + 8) + random.nextInt(16),
-                                     ydist.chooseLevel(random),
-                                    (chunkZ * 16 + 8) + random.nextInt(16));
-
+        outerloop:
         for (int x = pos.getX(); x < pos.getX() + width; x++) {
             for (int z = pos.getZ(); z < pos.getZ() + length; z++) {
-                int i = 1;
-                while (total++ < size) {
+                for (int i = 1; i < height; i++) {
                     double xPos = x + (i * Math.cos(pitch) * Math.cos(yaw));
                     double zPos = z + (i * Math.cos(pitch) * Math.sin(yaw));
                     double yPos = pos.getY() + (i * Math.sin(pitch));
-                    world.setBlockState(new BlockPos(xPos, yPos, zPos), blocks.chooseBlock(random), 2|16);
+                    world.setBlockState(new BlockPos(xPos, yPos, zPos),
+                                        blocks.chooseBlock(random), 2 | 16);
+                    if (total++ > size) {
+                        break outerloop;
+                    }
                 }
             }
         }
+
+        CoreGen.logger.info("Generated deposit at {} - {} blocks ({} expected); {},{},{} ", pos, total, size, width, length, height);
+    }
+
+    @Override
+    public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        BlockPos pos = new BlockPos((chunkX * 16 + 8) + random.nextInt(16),
+                                    ydist.chooseLevel(random),
+                                    (chunkZ * 16 + 8) + random.nextInt(16));
+        generate(random, pos, world, 0, 90, 0.4, 0.2, 0.4);
     }
 
 }

@@ -18,8 +18,8 @@
 package com.dizzyd.coregen;
 
 import com.dizzyd.coregen.config.Deposit;
+import com.dizzyd.coregen.feature.ClusterFeature;
 import com.dizzyd.coregen.feature.ScriptFeature;
-import com.dizzyd.coregen.feature.SeamFeature;
 import com.dizzyd.coregen.util.WeightedBlockList;
 import com.dizzyd.coregen.ylevel.YLevelDistribution;
 import com.dizzyd.coregen.ylevel.YLevelGaussian;
@@ -76,13 +76,13 @@ public class Config {
                 switch (featureCfg.getString("type")) {
                     case "script":
                         ScriptFeature script = ConfigBeanFactory.create(featureCfg, ScriptFeature.class);
-                        script.init(blocks, dist);
+                        script.init(featureCfg, blocks, dist);
                         deposit.addFeature(script);
                         break;
-                    case "seam":
-                        SeamFeature seam = ConfigBeanFactory.create(featureCfg, SeamFeature.class);
-                        seam.init(blocks, dist);
-                        deposit.addFeature(seam);
+                    case "cluster":
+                        ClusterFeature cluster = ConfigBeanFactory.create(featureCfg, ClusterFeature.class);
+                        cluster.init(featureCfg, blocks, dist);
+                        deposit.addFeature(cluster);
                         break;
                 }
             }

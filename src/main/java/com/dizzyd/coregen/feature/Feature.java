@@ -19,6 +19,7 @@ package com.dizzyd.coregen.feature;
 
 import com.dizzyd.coregen.util.WeightedBlockList;
 import com.dizzyd.coregen.ylevel.YLevelDistribution;
+import com.typesafe.config.Config;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -29,6 +30,7 @@ public abstract class Feature {
     protected String type;
     protected WeightedBlockList blocks;
     protected YLevelDistribution ydist;
+    protected Config config;
 
     public String getType() {
         return type;
@@ -38,7 +40,8 @@ public abstract class Feature {
         this.type = type;
     }
 
-    public void init(WeightedBlockList blocks, YLevelDistribution dist) {
+    public void init(Config config, WeightedBlockList blocks, YLevelDistribution dist) {
+        this.config = config;
         this.blocks = blocks;
         this.ydist = dist;
     }

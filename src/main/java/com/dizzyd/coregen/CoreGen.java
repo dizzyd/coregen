@@ -29,9 +29,15 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Enumeration;
 
 @Mod(modid = CoreGen.MODID, name = CoreGen.NAME, version = CoreGen.VERSION)
 public class CoreGen
@@ -53,6 +59,9 @@ public class CoreGen
         scriptUtil = new ScriptUtil();
         configDirectory = event.getModConfigurationDirectory();
         config = new Config(configDirectory);
+
+       installScripts(configDirectory.getParentFile());
+
     }
 
     @EventHandler
@@ -87,5 +96,31 @@ public class CoreGen
 
     public static void reloadConfig() {
         config = new Config(configDirectory);
+    }
+
+    private void installScripts(File baseDir) {
+        // Create the coregen directory which will hold our scripts
+        File scriptDir = new File(baseDir, "coregen");
+        scriptDir.mkdirs();
+
+        // For each of the directories in the classpath; copy into the scriptDir
+        // IIF it doesn't exist
+        try {
+            Enumeration<URL> scripts = getClass().getClassLoader().getResources("scripts");
+            if (scripts.hasMoreElements()) {
+                File scriptResources = new File(scripts.nextElement().toURI());
+                for (File f : scriptResources.listFiles()) {
+                    File target = new File(scriptDir, f.getName());
+                    if (!target.exists()) {
+                        FileUtils.copyFile(f, target);
+                        logger.info("Installed script {}", target.toString());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -18,6 +18,8 @@
 package com.dizzyd.coregen.feature;
 
 import com.dizzyd.coregen.CoreGen;
+import com.typesafe.config.Config;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
@@ -27,14 +29,13 @@ import javax.script.Bindings;
 import javax.script.CompiledScript;
 import javax.script.ScriptException;
 import java.util.Random;
-import java.util.function.Consumer;
 
 public class ScriptFeature extends Feature {
     private CompiledScript script;
     private int errorCount = 0;
 
-    private ThreadLocal<Bindings> localBindings = new ThreadLocal<>();
-    private ThreadLocal<LogFunc> logFunc = new ThreadLocal<>();
+    private ThreadLocal<Bindings> bindingsThreadLocal = new ThreadLocal<>();
+    private ThreadLocal<Context> ctxThreadLocal = new ThreadLocal<>();
 
     private String filename;
 
@@ -63,31 +64,17 @@ public class ScriptFeature extends Feature {
         // The ScriptEngine and CompiledScript are thread-safe, but bindings are most definitely not;
         // saw a lot of random hangs in initial development because of this. To avoid per-chunk Binding object
         // creation, we cache the bindings in thread-local variables
-        Bindings bindings = localBindings.get();
+        Bindings bindings = bindingsThreadLocal.get();
         if (bindings == null) {
             bindings = script.getEngine().createBindings();
+            bindingsThreadLocal.set(bindings);
         }
 
-        // Get thread-local instance of our logging func and make sure it has current world assigned
-        LogFunc logger = logFunc.get();
-        if (logger == null) {
-            logger = new LogFunc();
-        }
-        logger.world = world;
-
-        bindings.put("log", logger);
-        bindings.put("ydist", ydist);
-        bindings.put("blockList", this.blocks);
-        bindings.put("random", random);
-        bindings.put("world", world);
+        bindings.put("ctx", getContext(world, this, random));
         bindings.put("cx", chunkX);
         bindings.put("cz", chunkZ);
         bindings.put("chunkGen", chunkGenerator);
         bindings.put("chunkProvider", chunkProvider);
-
-        // Save thread-locals
-        localBindings.set(bindings);
-        logFunc.set(logger);
 
         // Evaluate the compiled script. We do track sequential failures to avoid spamming the engine
         // and the console. The errorCount is reset on each successful run and incremented on each failed
@@ -106,12 +93,46 @@ public class ScriptFeature extends Feature {
         }
     }
 
-    private static class LogFunc implements Consumer<String> {
-        World world;
+    private Context getContext(World world, Feature feature, Random random) {
+        Context ctx = ctxThreadLocal.get();
+        if (ctx == null) {
+            ctx = new Context();
+            ctxThreadLocal.set(ctx);
+        }
 
-        @Override
-        public void accept(String message) {
-            world.getMinecraftServer().getPlayerList().sendMessage(new TextComponentString(message));
+        ctx.world = world; ctx.feature = feature; ctx.random = random;
+        return ctx;
+    }
+
+    public class Context {
+        World world;
+        Feature feature;
+        Random random;
+
+        public Feature getFeature() {
+            return feature;
+        }
+
+        public Random getRandom() {
+            return random;
+        }
+
+        public Config getConfig() {
+            return feature.config;
+        }
+
+        public BlockPos randomPos(int chunkX, int chunkZ) {
+            return new BlockPos((chunkX * 16 + 8) + random.nextInt(16),
+                                ydist.chooseLevel(random),
+                                (chunkZ * 16 + 8) + random.nextInt(16));
+        }
+
+        public void placeBlock(double x, double y, double z) {
+            world.setBlockState(new BlockPos(x, y, z), feature.blocks.chooseBlock(random), 2|16);
+        }
+
+        public void log(String msg) {
+            world.getMinecraftServer().getPlayerList().sendMessage(new TextComponentString(msg));
         }
     }
 }
