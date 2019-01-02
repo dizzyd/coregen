@@ -120,6 +120,10 @@ public class ScriptFeature extends Feature {
             return feature.config;
         }
 
+        public World getWorld() {
+            return world;
+        }
+
         public BlockPos randomPos(int chunkX, int chunkZ) {
             return new BlockPos((chunkX * 16 + 8) + random.nextInt(16),
                                 ydist.chooseLevel(random),

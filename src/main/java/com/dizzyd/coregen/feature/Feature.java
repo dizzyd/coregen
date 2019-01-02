@@ -40,6 +40,10 @@ public abstract class Feature {
         this.type = type;
     }
 
+    public WeightedBlockList getBlocks() {
+        return blocks;
+    }
+
     public void init(Config config, WeightedBlockList blocks, YLevelDistribution dist) {
         this.config = config;
         this.blocks = blocks;
