@@ -6,12 +6,7 @@ function generate(ctx, cx, cz) {
     var depth = 1 + ctx.random.nextInt(ctx.config.getInt("depth"));
     var radius = 3 + ctx.random.nextInt(ctx.config.getInt("radius"));
 
-    // Find the surface, starting from the ypos and working down    
-    while (ctx.world.isAirBlock(pos)) {
-        pos = pos.down();
-    }
-
-    if (pos.y < pos.y - depth) {
+    if (pos.y - depth < 1) {
         print("Too deep!");
         return
     }
