@@ -18,11 +18,11 @@
 package com.dizzyd.coregen;
 
 import com.dizzyd.coregen.config.Deposit;
-import com.dizzyd.coregen.feature.ClusterFeature;
 import com.dizzyd.coregen.feature.ScriptFeature;
 import com.dizzyd.coregen.util.WeightedBlockList;
 import com.dizzyd.coregen.ylevel.YLevelDistribution;
 import com.dizzyd.coregen.ylevel.YLevelGaussian;
+import com.dizzyd.coregen.ylevel.YLevelSurface;
 import com.dizzyd.coregen.ylevel.YLevelUniform;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
@@ -79,11 +79,6 @@ public class Config {
                         script.init(featureCfg, blocks, dist);
                         deposit.addFeature(script);
                         break;
-                    case "cluster":
-                        ClusterFeature cluster = ConfigBeanFactory.create(featureCfg, ClusterFeature.class);
-                        cluster.init(featureCfg, blocks, dist);
-                        deposit.addFeature(cluster);
-                        break;
                 }
             }
 
@@ -124,6 +119,8 @@ public class Config {
                 return ConfigBeanFactory.create(cfg, YLevelGaussian.class);
             case "uniform":
                 return ConfigBeanFactory.create(cfg, YLevelUniform.class);
+            case "surface":
+                return ConfigBeanFactory.create(cfg, YLevelSurface.class);
         }
         return null;
     }
