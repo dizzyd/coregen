@@ -4,6 +4,10 @@
 function generate(ctx, cx, cz) {
 
     pos = ctx.randomPos(cx, cz);
+    if (pos.y < 1) {
+        return; // Y-level requirement was not met
+    }
+
     var x = pos.x;
     var y = pos.y;
     var z = pos.z;

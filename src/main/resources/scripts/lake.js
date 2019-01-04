@@ -3,6 +3,10 @@ var SimplexNoise = Java.type("com.dizzyd.coregen.util.SimplexNoise");
 
 function generate(ctx, cx, cz) {
     var pos = ctx.randomPos(cx, cz);
+    if (pos.y < 1) {
+        return; // Y-level requirement was not met
+    }
+
     var depth = 1 + ctx.random.nextInt(ctx.config.getInt("depth"));
     var radius = 3 + ctx.random.nextInt(ctx.config.getInt("radius"));
 

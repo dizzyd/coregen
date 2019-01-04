@@ -6,6 +6,9 @@ function generate(ctx, cx, cz) {
     // Choose a random position in the chunk, using the y-distribution
     // defined in the feature config
     var pos = ctx.randomPos(cx, cz);
+    if (pos.y < 1) {
+        return; // Y-level requirement was not met
+    }
 
     var rand = ctx.random;
     var blocks = ctx.config.getInt("count");

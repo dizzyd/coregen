@@ -6,6 +6,10 @@ function generate(ctx, cx, cz) {
     // Choose a random position in the chunk, using the y-distribution
     // defined in the feature config
     var pos = ctx.randomPos(cx, cz);
+    if (pos.y < 1) {
+        // Y-level distribution wasn't satisfied; bail
+        return
+    }
 
     // Configuration settings for scripts need to be read directly
     // from the config object
@@ -17,7 +21,7 @@ function generate(ctx, cx, cz) {
         for (var z = pos.z - radius; z <= pos.z + radius; ++z) {
             var areaZ = z - pos.z;
             if (inArea(areaX, areaZ, radius)) {
-                for (var y = pos.y - height; y <= pos.y + height; ++y) {
+                for (var y = pos.y - height; y <= pos.y; ++y) {
                     // Place a block in the world at the specified location; this uses
                     // the weighted blocks list from the feature config to choose the
                     // appropriate block
