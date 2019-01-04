@@ -18,8 +18,6 @@
 package com.dizzyd.coregen.util;
 
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,12 +30,12 @@ public class WeightedBlockList {
     private ArrayList<IBlockState> blocks = new ArrayList<IBlockState>();
 
     public void setBlock(String blockId) {
-        this.singleBlock = blockIdToState(blockId);
+        this.singleBlock = BlockStateParser.parse(blockId);
     }
 
     public void setBlocks(Map<String, Object> blockMap) {
         for (Map.Entry<String, Object> e : blockMap.entrySet()) {
-            IBlockState bs = blockIdToState(e.getKey());
+            IBlockState bs = BlockStateParser.parse(e.getKey());
             for (int i = 0; i < (Integer)e.getValue(); i++) {
                 blocks.add(bs);
             }
@@ -47,7 +45,7 @@ public class WeightedBlockList {
 
     public void setBlocks(List<String> blockIds) {
         for (String id : blockIds) {
-            blocks.add(blockIdToState(id));
+            blocks.add(BlockStateParser.parse(id));
         }
         this.singleBlock = null;
     }
@@ -58,43 +56,5 @@ public class WeightedBlockList {
         }
 
         return this.blocks.get(r.nextInt(this.blocks.size()));
-    }
-
-    private IBlockState blockIdToState(String id) {
-        // <block id>; meta
-        String[] parts = id.split(";", 2);
-        switch (parts.length) {
-            case 1:
-                // Only a resource was provided
-                return blockIdToState(parts[0], 0);
-            case 2:
-                // Resource and meta were provided
-                return blockIdToState(parts[0], Integer.valueOf(parts[1]));
-            default:
-                // Yikes
-                throw new InvalidBlockId(id);
-        }
-    }
-
-    private IBlockState blockIdToState(String id, int meta) {
-        ResourceLocation loc = new ResourceLocation(id);
-        if (ForgeRegistries.BLOCKS.containsKey(loc)) {
-            return ForgeRegistries.BLOCKS.getValue(loc).getStateFromMeta(meta);
-        }
-        throw new InvalidBlockId(id);
-    }
-
-    public class InvalidBlockId extends RuntimeException {
-        public String blockId;
-        public int blockMeta;
-
-        public InvalidBlockId(String id, int meta) {
-            this.blockId = id;
-            this.blockMeta = meta;
-        }
-
-        public InvalidBlockId(String id) {
-            this.blockId = id;
-        }
     }
 }
