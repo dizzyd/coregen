@@ -16,8 +16,13 @@
 // ***************************************************************************
 package com.dizzyd.coregen.ylevel;
 
+import net.minecraft.world.World;
+
 import java.util.Random;
 
 public abstract class YLevelDistribution {
-    public abstract int chooseLevel(Random r);
+    // Given a world, x coordinate and z coordinate, choose a Y-level
+    // The x/z coordinates can be used to ensure certain constraints about the location
+    // are met
+    public abstract int chooseLevel(World world, int x, int z);
 }

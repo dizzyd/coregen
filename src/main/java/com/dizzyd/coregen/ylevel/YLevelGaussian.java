@@ -16,6 +16,8 @@
 // ***************************************************************************
 package com.dizzyd.coregen.ylevel;
 
+import net.minecraft.world.World;
+
 import java.util.Random;
 
 public class YLevelGaussian extends YLevelDistribution {
@@ -24,8 +26,8 @@ public class YLevelGaussian extends YLevelDistribution {
     private int spread;
 
     @Override
-    public int chooseLevel(Random r) {
-        return (int) (Math.round(r.nextGaussian() * spread) + center);
+    public int chooseLevel(World w, int x, int z) {
+        return (int) (Math.round(w.rand.nextGaussian() * spread) + center);
     }
 
     public int getCenter() {

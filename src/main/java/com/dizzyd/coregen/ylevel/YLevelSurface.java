@@ -16,33 +16,36 @@
 // ***************************************************************************
 package com.dizzyd.coregen.ylevel;
 
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.Random;
 
-public class YLevelUniform extends YLevelDistribution {
+public class YLevelSurface extends YLevelDistribution {
 
-    private int center;
-    private int spread;
+    private int max;
+
+    public int getMax() {
+        return max;
+    }
+
+    public void setMax(int max) {
+        this.max = max;
+    }
 
     @Override
     public int chooseLevel(World w, int x, int z) {
-        return (int)((center - spread) + (w.rand.nextFloat() * (spread * 2)));
-    }
+        // Starting at x,0,z, scan up for first air-gapped block (aka "surface")
+        BlockPos p = new BlockPos(x, 0, z);
+        while (p.getY() < max && !w.isAirBlock(p)) {
+            p = p.up();
+        }
 
-    public int getCenter() {
-        return center;
-    }
-
-    public void setCenter(int center) {
-        this.center = center;
-    }
-
-    public int getSpread() {
-        return spread;
-    }
-
-    public void setSpread(int spread) {
-        this.spread = spread;
+        int ylevel = p.getY()-1;
+        if (ylevel < max) {
+            return ylevel;
+        } else {
+            return 0;
+        }
     }
 }
