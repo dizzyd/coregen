@@ -125,9 +125,10 @@ public class ScriptFeature extends Feature {
         }
 
         public BlockPos randomPos(int chunkX, int chunkZ) {
-            return new BlockPos((chunkX * 16 + 8) + random.nextInt(16),
-                                ydist.chooseLevel(random),
-                                (chunkZ * 16 + 8) + random.nextInt(16));
+            int x = (chunkX * 16 + 8) + random.nextInt(16);
+            int z = (chunkZ * 16 + 8) + random.nextInt(16);
+            int y = feature.ydist.chooseLevel(world, x, z);
+            return new BlockPos(x, y, z);
         }
 
         public void placeBlock(double x, double y, double z) {
