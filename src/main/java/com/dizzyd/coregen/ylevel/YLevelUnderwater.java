@@ -16,13 +16,20 @@
 // ***************************************************************************
 package com.dizzyd.coregen.ylevel;
 
-import net.minecraft.util.EnumFacing;
+import com.dizzyd.coregen.CoreGen;
+import com.dizzyd.coregen.util.BlockStateParser;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class YLevelSurface extends YLevelDistribution {
+import java.util.IdentityHashMap;
+import java.util.List;
+
+public class YLevelUnderwater extends YLevelDistribution {
 
     private int max;
+    private List<String> liquids;
+    private IdentityHashMap<IBlockState, Boolean> liquidStates;
 
     public int getMax() {
         return max;
@@ -32,11 +39,29 @@ public class YLevelSurface extends YLevelDistribution {
         this.max = max;
     }
 
+    public List<String> getLiquids() {
+        return liquids;
+    }
+
+    public void setLiquids(List<String> liquids) {
+        this.liquids = liquids;
+
+        // Parse each of the string identifiers into block states
+        liquidStates = new IdentityHashMap<IBlockState, Boolean>();
+        for (String id : liquids) {
+            IBlockState bs = BlockStateParser.parse(id);
+            if (!bs.getMaterial().isLiquid()) {
+                CoreGen.logger.warn("WARNING: Setting up underwater y-level; {} is not a liquid block!");
+            }
+            liquidStates.put(BlockStateParser.parse(id), true);
+        }
+    }
+
     @Override
-    public int chooseLevel(World w, int x, int z) {
-        // Starting at x,0,z, scan up for first air-gapped (aka "surface")
+    public int chooseLevel(World world, int x, int z) {
+        // Starting at x,0,z, scan up for first liquid block on our list of liquids
         BlockPos p = new BlockPos(x, 0, z);
-        while (p.getY() < max && !w.isAirBlock(p)) {
+        while (p.getY() < max && !liquidStates.containsKey(world.getBlockState(p))) {
             p = p.up();
         }
 
@@ -45,13 +70,8 @@ public class YLevelSurface extends YLevelDistribution {
             return 0;
         }
 
-        // Step back down to last non-air block
+        // Step back down to last non-liquid block
         p = p.down();
-        if (!w.getBlockState(p).isSideSolid(w, p, EnumFacing.UP)) {
-            // Top block is not solid on top; bail
-            return 0;
-        }
-
         return p.getY();
     }
 }

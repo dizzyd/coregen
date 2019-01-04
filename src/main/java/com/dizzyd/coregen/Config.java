@@ -20,14 +20,12 @@ package com.dizzyd.coregen;
 import com.dizzyd.coregen.config.Deposit;
 import com.dizzyd.coregen.feature.ScriptFeature;
 import com.dizzyd.coregen.util.WeightedBlockList;
-import com.dizzyd.coregen.ylevel.YLevelDistribution;
-import com.dizzyd.coregen.ylevel.YLevelGaussian;
-import com.dizzyd.coregen.ylevel.YLevelSurface;
-import com.dizzyd.coregen.ylevel.YLevelUniform;
+import com.dizzyd.coregen.ylevel.*;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValue;
+import net.minecraft.init.Blocks;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -39,6 +37,7 @@ public class Config {
 
     static com.typesafe.config.Config defaultDeposit;
     static com.typesafe.config.Config defaultRoot;
+    static com.typesafe.config.Config defaultYLevels;
 
     static {
         HashMap<String, Object> defaults = new HashMap<String, Object>();
@@ -51,6 +50,14 @@ public class Config {
         defaults = new HashMap<String, Object>();
         defaults.put("deposits", new ArrayList<ConfigValue>());
         defaultRoot = ConfigFactory.parseMap(defaults);
+
+        defaults = new HashMap<String, Object>();
+        List<String> defaultLiquids = new ArrayList<>();
+        defaultLiquids.add(Blocks.WATER.getRegistryName().toString());
+        defaults.put("liquids", defaultLiquids);
+        defaults.put("max", 128);
+        defaultYLevels = ConfigFactory.parseMap(defaults);
+
     }
 
     private Map<String, Deposit> deposits = new HashMap<String, Deposit>();
@@ -114,6 +121,7 @@ public class Config {
     }
 
     private YLevelDistribution getYLevelDist(com.typesafe.config.Config cfg) {
+        cfg = cfg.withFallback(defaultYLevels);
         switch(cfg.getString("type")) {
             case "gaussian":
                 return ConfigBeanFactory.create(cfg, YLevelGaussian.class);
@@ -121,6 +129,8 @@ public class Config {
                 return ConfigBeanFactory.create(cfg, YLevelUniform.class);
             case "surface":
                 return ConfigBeanFactory.create(cfg, YLevelSurface.class);
+            case "underwater":
+                return ConfigBeanFactory.create(cfg, YLevelUnderwater.class);
         }
         return null;
     }
