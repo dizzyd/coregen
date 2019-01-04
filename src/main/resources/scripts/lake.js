@@ -3,8 +3,8 @@ var SimplexNoise = Java.type("com.dizzyd.coregen.util.SimplexNoise");
 
 function generate(ctx, cx, cz) {
     var pos = ctx.randomPos(cx, cz);
-    var depth = ctx.config.getInt("depth");
-    var radius = 3 + ctx.random.nextInt(ctx.config.getInt("radius")); 
+    var depth = 1 + ctx.random.nextInt(ctx.config.getInt("depth"));
+    var radius = 3 + ctx.random.nextInt(ctx.config.getInt("radius"));
 
     // Find the surface, starting from the ypos and working down    
     while (ctx.world.isAirBlock(pos)) {
@@ -13,7 +13,7 @@ function generate(ctx, cx, cz) {
 
     if (pos.y < pos.y - depth) {
         print("Too deep!");
-        return 
+        return
     }
 
     // Choose a random factor and scale to between 0.0 and 0.3
@@ -30,26 +30,30 @@ function generate(ctx, cx, cz) {
         length = radius - (radius * invfactor);
     }
 
-    // Select a jitter value; we use this to ensure the noise is unique per-lake instance
-    var jitter = ctx.random.nextDouble();
+    // Select a jitter value per axis; we use this to ensure the noise is unique per-lake instance
+    // N.B. we don't jitter the Y-level so that it moves a little more independently
+    var jx = ctx.random.nextDouble(); jz = ctx.random.nextDouble();
     for (var x = -width; x < width; x++) {
         for (var z = -length; z < length; z++) {
-            // Normalize coordinates to 0..1, relative to total width/length
-            var nx = x / width; 
-            var nz = z / length;
+            for (var y = 0; y < depth; y++) {
+                // Normalize coordinates to 0..1, relative to total width/length
+                var nx = x / width;
+                var nz = z / length;
+                var ny = y / depth;
 
-            // Calculate 2D noise, using the normalized coordinates w/
-            // pre-selected jitter; scale the noise to between 0..1
-            var n = SimplexNoise.noise(nx + jitter, nz + jitter) / 2 + 0.5;            
+                // Calculate the normalized distance-square
+                var ds = nx * nx + nz * nz + ny * ny;
 
-            // Calculate the normalized distance-square
-            var ds = nx*nx + nz*nz;
+                // Calculate noise, using the normalized coordinates w/
+                // pre-selected jitter; scale the result to between 0..1
+                var n = SimplexNoise.noise(nx * jx, ny, nz * jz) / 2 + 0.5;
 
-            // If the normalized noise exceeds the distance-square, place our block;
-            // the further away a block is from the center of mass, the less likely it is
-            // we'll place a block
-            if (n > ds) {
-                ctx.placeBlock(pos.x + x, pos.y, pos.z + z);
+                // If the normalized noise exceeds the distance-square, place our block;
+                // the further away a block is from the center of mass, the less likely it is
+                // we'll place a block
+                if (n > ds) {
+                    ctx.placeBlock(pos.x + x, pos.y - y, pos.z + z);
+                }
             }
         }
     }
