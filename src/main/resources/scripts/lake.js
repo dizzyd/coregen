@@ -11,8 +11,7 @@ function generate(ctx, cx, cz) {
     var radius = 3 + ctx.random.nextInt(ctx.config.getInt("radius"));
 
     if (pos.y - depth < 1) {
-        print("Too deep!");
-        return
+        return; // Not enough room to place the deepest part of lake
     }
 
     // Choose a random factor and scale to between 0.0 and 0.3
