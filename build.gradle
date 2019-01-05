@@ -38,7 +38,6 @@ configurations {
 
 dependencies {
     shade "com.typesafe:config:1.3.3"
-    shade "com.coveo:nashorn-commonjs-modules:1.0.9"
     shade "com.github.davidmoten:rtree:0.8.6"
     shade "com.github.davidmoten:flatbuffers-java:1.3.0.1"
 }
