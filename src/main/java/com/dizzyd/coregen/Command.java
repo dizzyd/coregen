@@ -49,7 +49,6 @@ public class Command extends CommandTreeBase {
     }
 
     public Command() {
-        addSubcommand(new CommandScript());
         addSubcommand(new GenerateDeposit());
         addSubcommand(new ReloadConfig());
         addSubcommand(new ClearBlocks());
@@ -60,26 +59,6 @@ public class Command extends CommandTreeBase {
             return args[id];
         } else {
             return null;
-        }
-    }
-
-    public static class CommandScript extends CommandBase {
-        @Override
-        public String getName() {
-            return "script";
-        }
-
-        @Override
-        public String getUsage(ICommandSender sender) {
-            return "cmd.cg.script.usage";
-        }
-
-        @Override
-        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-            String scriptName = args[0];
-
-            String status = CoreGen.scriptUtil.run(scriptName, sender.getEntityWorld(), sender.getPosition());
-            Command.notifyCommandListener(sender, this, "cmd.cg.script", status);
         }
     }
 
