@@ -1,6 +1,13 @@
 #en_US
 
-cmd.cg.usage=Generate stuff!
+cmd.cg.deposit.usage=Generate a deposit in current chunk by id
+cmd.cg.deposit.unknown.deposit=Unknown deposit: %s
 
-cmd.cg.script.usage=Runs a Javascript file
-cmd.cg.script=%s
+cmd.cg.reload.usage=Reloads coregen.conf; all new chunks will use this config
+cmd.cg.config.reload=coregen.conf has been reloaded
+
+cmd.cg.clear.usage=Clears all blocks of a type in a radius around caller. E.g. /cg clear stone 50
+cmd.cg.clear.ok=Cleared %d blocks
+
+cmd.cg.regen.scripts.usage=Rewrites all default scripts into coregen/ directory
+cmd.cg.regen.scripts.ok=Default scripts re-written to coregen/

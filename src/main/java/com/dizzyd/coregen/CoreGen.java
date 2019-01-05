@@ -60,7 +60,7 @@ public class CoreGen
         configDirectory = event.getModConfigurationDirectory();
         config = new Config(configDirectory);
 
-       installScripts(configDirectory.getParentFile());
+       installScripts(false);
 
     }
 
@@ -98,20 +98,20 @@ public class CoreGen
         config = new Config(configDirectory);
     }
 
-    private void installScripts(File baseDir) {
+    static public void installScripts(boolean force) {
         // Create the coregen directory which will hold our scripts
-        File scriptDir = new File(baseDir, "coregen");
+        File scriptDir = new File(configDirectory.getParentFile(), "coregen");
         scriptDir.mkdirs();
 
         // For each of the directories in the classpath; copy into the scriptDir
         // IIF it doesn't exist
         try {
-            Enumeration<URL> scripts = getClass().getClassLoader().getResources("scripts");
+            Enumeration<URL> scripts = CoreGen.class.getClassLoader().getResources("scripts");
             if (scripts.hasMoreElements()) {
                 File scriptResources = new File(scripts.nextElement().toURI());
                 for (File f : scriptResources.listFiles()) {
                     File target = new File(scriptDir, f.getName());
-                    if (!target.exists()) {
+                    if (force || !target.exists()) {
                         FileUtils.copyFile(f, target);
                         logger.info("Installed script {}", target.toString());
                     }

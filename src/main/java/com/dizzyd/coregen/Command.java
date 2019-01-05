@@ -52,6 +52,7 @@ public class Command extends CommandTreeBase {
         addSubcommand(new GenerateDeposit());
         addSubcommand(new ReloadConfig());
         addSubcommand(new ClearBlocks());
+        addSubcommand(new RegenScripts());
     }
 
     private static String getArg(String[] args, int id) {
@@ -104,7 +105,7 @@ public class Command extends CommandTreeBase {
 
         @Override
         public String getUsage(ICommandSender sender) {
-            return "return cmd.cg.reload";
+            return "return cmd.cg.reload.usage";
         }
 
         @Override
@@ -123,13 +124,13 @@ public class Command extends CommandTreeBase {
 
         @Override
         public String getUsage(ICommandSender sender) {
-            return "cmd.cg.clear";
+            return "cmd.cg.clear.usage";
         }
 
         @Override
         public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-            int radius = CommandBase.parseInt(args[0]);
-            Block blockType = CommandBase.getBlockByText(sender, args[1]);
+            Block blockType = CommandBase.getBlockByText(sender, args[0]);
+            int radius = CommandBase.parseInt(args[1]);
 
             BlockPos playerPos = sender.getPosition();
 
@@ -170,6 +171,25 @@ public class Command extends CommandTreeBase {
 
             Command.notifyCommandListener(sender, this, "cmd.cg.clear.ok", count);
 
+        }
+    }
+
+    public static class RegenScripts extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "regen-scripts";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.regen.scripts.usage";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            CoreGen.installScripts(true);
+            Command.notifyCommandListener(sender, this, "cmd.cg.regen.scripts.ok");
         }
     }
 
