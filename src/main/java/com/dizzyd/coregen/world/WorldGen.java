@@ -24,11 +24,27 @@ import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.fml.common.IWorldGenerator;
 
+import java.util.DoubleSummaryStatistics;
+import java.util.LongSummaryStatistics;
 import java.util.Random;
 
 public class WorldGen implements IWorldGenerator {
+
+    private LongSummaryStatistics stats = new LongSummaryStatistics();
+
+    public LongSummaryStatistics getStats() {
+        return stats;
+    }
+
+    public void resetStats() {
+        stats = new LongSummaryStatistics();
+    }
+
     @Override
     public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        boolean generated = false;
+        long startTime = System.currentTimeMillis();
+
         // Walk through each deposit in the config
         for (Deposit d : CoreGen.config.getDeposits().values())
         {
@@ -38,9 +54,21 @@ public class WorldGen implements IWorldGenerator {
                 continue;
             }
 
+            // Mark generated as true so timing information is captured. It's possible the
+            // deposit still won't generate (due to restrictions), but this is something we
+            // want to track the timing on as well
+            generated = true;
+
             // Do generation; if it succeeds, add a deposit to the world data so restrictions can be enforced
             if (d.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider, false)) {
                 WorldData.addDeposit(world, d.getId(), chunkX, chunkZ);
+            }
+        }
+
+        // Update generation stats if generation was attempted
+        if (generated) {
+            synchronized (stats) {
+                stats.accept(System.currentTimeMillis() - startTime);
             }
         }
     }

@@ -49,6 +49,7 @@ public class CoreGen
     public static Logger logger;
     public static Config config;
     public static ScriptUtil scriptUtil;
+    public static WorldGen worldGen;
 
     private static File configDirectory;
 
@@ -59,16 +60,16 @@ public class CoreGen
         scriptUtil = new ScriptUtil();
         configDirectory = event.getModConfigurationDirectory();
         config = new Config(configDirectory);
+        worldGen = new WorldGen();
 
-       installScripts(false);
-
+        installScripts(false);
     }
 
     @EventHandler
     public void init(FMLInitializationEvent event)
     {
         MinecraftForge.ORE_GEN_BUS.register(this);
-        GameRegistry.registerWorldGenerator(new WorldGen(), 1000);
+        GameRegistry.registerWorldGenerator(worldGen, 1000);
     }
 
     @Mod.EventHandler

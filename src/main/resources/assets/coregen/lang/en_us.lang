@@ -11,3 +11,11 @@ cmd.cg.clear.ok=Cleared %d blocks
 
 cmd.cg.regen.scripts.usage=Rewrites all default scripts into coregen/ directory
 cmd.cg.regen.scripts.ok=Default scripts re-written to coregen/
+
+cmd.cg.get.stats=Shows stats for generation; E.g. /cg stats [deposit ID]
+cmd.cg.get.stats.global=Average chunk generation time: %s us
+cmd.cg.get.stats.unknown.deposit=Unknown deposit: %s
+cmd.cg.get.stats.deposit=Average %s deposit generation time: %s us
+
+cmd.cg.reset.stats=Resets stats for world and deposit generation
+cmd.cg.reset.stats.ok=Stats reset

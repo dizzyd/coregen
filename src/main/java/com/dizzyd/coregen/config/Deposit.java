@@ -25,6 +25,7 @@ import net.minecraft.world.gen.IChunkGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LongSummaryStatistics;
 import java.util.Random;
 
 public class Deposit {
@@ -33,6 +34,15 @@ public class Deposit {
     private Restrictions restrictions;
     private List<Feature> features = new ArrayList<Feature>();
     private boolean enabled;
+    private LongSummaryStatistics stats = new LongSummaryStatistics();
+
+    public LongSummaryStatistics getStats() {
+        return stats;
+    }
+
+    public void resetStats() {
+        stats = new LongSummaryStatistics();
+    }
 
     public boolean isEnabled() {
         return enabled;
@@ -71,12 +81,18 @@ public class Deposit {
     }
 
     public boolean generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider, boolean force) {
+        long startTime = System.currentTimeMillis();
+
         if (!force && !canGenerate(world, chunkX, chunkZ, chunkProvider)) {
             return false;
         }
 
         for (Feature f : features) {
             f.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider);
+        }
+
+        synchronized (stats) {
+            stats.accept(System.currentTimeMillis() - startTime);
         }
 
         return true;

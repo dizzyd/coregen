@@ -35,6 +35,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.server.command.CommandTreeBase;
 
 import java.util.HashSet;
+import java.util.LongSummaryStatistics;
 import java.util.Set;
 
 public class Command extends CommandTreeBase {
@@ -53,6 +54,8 @@ public class Command extends CommandTreeBase {
         addSubcommand(new ReloadConfig());
         addSubcommand(new ClearBlocks());
         addSubcommand(new RegenScripts());
+        addSubcommand(new GetStats());
+        addSubcommand(new ResetStats());
     }
 
     private static String getArg(String[] args, int id) {
@@ -190,6 +193,62 @@ public class Command extends CommandTreeBase {
         public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
             CoreGen.installScripts(true);
             Command.notifyCommandListener(sender, this, "cmd.cg.regen.scripts.ok");
+        }
+    }
+
+    public static class GetStats extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "stats";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.get.stats";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            String depositId = getArg(args, 0);
+            if (depositId == null) {
+                LongSummaryStatistics stats = CoreGen.worldGen.getStats();
+                String avgus = String.format("%4.0f", stats.getAverage() * 1000);
+                Command.notifyCommandListener(sender, this, "cmd.cg.get.stats.global", avgus);
+                return;
+            }
+
+            Deposit deposit = CoreGen.config.getDeposits().getOrDefault(depositId, null);
+            if (deposit == null) {
+                Command.notifyCommandListener(sender, this, "cmd.cg.get.stats.unknown.deposit", depositId);
+                return;
+            }
+
+            LongSummaryStatistics stats = deposit.getStats();
+            String avgus = String.format("%4.0f", stats.getAverage() * 1000);
+            Command.notifyCommandListener(sender, this, "cmd.cg.get.stats.deposit", depositId, avgus);
+        }
+    }
+
+    public static class ResetStats extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "reset-stats";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.reset.stats";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            CoreGen.worldGen.resetStats();
+            for (Deposit d : CoreGen.config.getDeposits().values()) {
+                d.resetStats();
+            }
+            Command.notifyCommandListener(sender, this, "cmd.cg.reset.stats.ok");
         }
     }
 
