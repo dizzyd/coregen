@@ -18,6 +18,9 @@
 package com.dizzyd.coregen;
 
 import com.dizzyd.coregen.config.Deposit;
+import com.dizzyd.coregen.world.WorldData;
+import com.github.davidmoten.rtree.Entry;
+import com.github.davidmoten.rtree.geometry.Point;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
@@ -29,11 +32,14 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerChunkMap;
 import net.minecraft.server.management.PlayerChunkMapEntry;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.server.command.CommandTreeBase;
+import rx.Observable;
 
+import java.io.*;
 import java.util.HashSet;
 import java.util.LongSummaryStatistics;
 import java.util.Set;
@@ -56,6 +62,8 @@ public class Command extends CommandTreeBase {
         addSubcommand(new RegenScripts());
         addSubcommand(new GetStats());
         addSubcommand(new ResetStats());
+        addSubcommand(new FindDeposit());
+        addSubcommand(new DumpDeposits());
     }
 
     private static String getArg(String[] args, int id) {
@@ -249,6 +257,60 @@ public class Command extends CommandTreeBase {
                 d.resetStats();
             }
             Command.notifyCommandListener(sender, this, "cmd.cg.reset.stats.ok");
+        }
+    }
+
+    public static class FindDeposit extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "find";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.find.usage";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            String depositId = getArg(args, 0);
+            if (depositId != null) {
+                ChunkPos pos = new ChunkPos(sender.getPosition());
+                Point pt = WorldData.nearestDeposit(sender.getEntityWorld(), depositId, pos.x, pos.z);
+                if (pt != null) {
+                    ChunkPos depositPos = new ChunkPos((int)pt.x(), (int)pt.y());
+                    int distance = (int)Math.sqrt(depositPos.getDistanceSq(sender.getCommandSenderEntity()));
+                    Command.notifyCommandListener(sender, this, "cmd.cg.find.ok",
+                                                  depositId, depositPos.getXStart(), depositPos.getZStart(), distance);
+                    return;
+                }
+            }
+            Command.notifyCommandListener(sender, this, "cmd.cg.find.not.found", depositId);
+        }
+    }
+
+    public static class DumpDeposits extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "dump-deposits";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.dump.deposits.usage";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            try {
+                int count = WorldData.dumpDeposits(sender.getEntityWorld());
+                Command.notifyCommandListener(sender, this, "cmd.cg.dump.deposits.ok", count);
+            } catch (IOException e) {
+                Command.notifyCommandListener(sender, this, "cmd.cg.dump.deposits.error");
+                e.printStackTrace();
+            }
         }
     }
 
