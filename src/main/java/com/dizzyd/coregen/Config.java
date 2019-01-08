@@ -39,6 +39,8 @@ public class Config {
     static com.typesafe.config.Config defaultRoot;
     static com.typesafe.config.Config defaultYLevels;
 
+    static com.typesafe.config.Config defaultScriptFeature;
+
     static {
         HashMap<String, Object> defaults = new HashMap<String, Object>();
         defaults.put("enabled", true);
@@ -58,6 +60,9 @@ public class Config {
         defaults.put("max", 128);
         defaultYLevels = ConfigFactory.parseMap(defaults);
 
+        defaults = new HashMap<String, Object>();
+        defaults.put("sparse", false);
+        defaultScriptFeature = ConfigFactory.parseMap(defaults);
     }
 
     private Map<String, Deposit> deposits = new HashMap<String, Deposit>();
@@ -82,6 +87,7 @@ public class Config {
 
                 switch (featureCfg.getString("type")) {
                     case "script":
+                        featureCfg = featureCfg.withFallback(defaultScriptFeature);
                         ScriptFeature script = ConfigBeanFactory.create(featureCfg, ScriptFeature.class);
                         script.init(featureCfg, blocks, dist);
                         deposit.addFeature(script);
