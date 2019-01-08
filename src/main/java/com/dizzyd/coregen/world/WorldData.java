@@ -21,15 +21,15 @@ import com.dizzyd.coregen.CoreGen;
 import com.github.davidmoten.rtree.*;
 import com.github.davidmoten.rtree.geometry.Geometries;
 import com.github.davidmoten.rtree.geometry.Point;
+import com.github.davidmoten.rtree.internal.Comparators;
 import net.minecraft.nbt.NBTTagByteArray;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 
 public class WorldData extends WorldSavedData {
@@ -112,12 +112,28 @@ public class WorldData extends WorldSavedData {
 
     public static synchronized Point nearestDeposit(World world, String depositId, int cx, int cz) {
         WorldData wd = load(world);
-        Entry<String, Point> pt = wd.deposits.nearest(Geometries.point(cx, cz), 1000, 1).
-                filter(entry -> depositId.equals(entry.value())).
-                firstOrDefault(null).toBlocking().single();
-        if (pt == null) {
-            return null;
+        Point center = Geometries.point(cx, cz);
+        Entry<String, Point> pt = wd.deposits.search(center, 1000)
+                .filter(entry -> depositId.equals(entry.value()))
+                .sorted((lhs, rhs) ->
+                        Double.compare(lhs.geometry().distance(center), rhs.geometry().distance(center)))
+                .firstOrDefault(null).toBlocking().single();
+        if (pt != null) {
+            return pt.geometry();
         }
-        return pt.geometry();
+        return null;
+    }
+
+    public static synchronized int dumpDeposits(World world) throws IOException {
+        int count = 0;
+        try(Writer w = new BufferedWriter(new FileWriter("coregen.deposits.txt"))) {
+            WorldData wd = load(world);
+            for (Entry<String, Point> entry : wd.deposits.entries().toBlocking().toIterable()) {
+                ChunkPos pos = new ChunkPos((int)entry.geometry().x(), (int)entry.geometry().y());
+                w.write(String.format("%s %d %d\n", entry.value(), pos.getXStart(), pos.getZStart()));
+                count++;
+            }
+        }
+        return count;
     }
 }
