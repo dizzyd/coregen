@@ -64,6 +64,7 @@ public class Command extends CommandTreeBase {
         addSubcommand(new ResetStats());
         addSubcommand(new FindDeposit());
         addSubcommand(new DumpDeposits());
+        addSubcommand(new RunScript());
     }
 
     private static String getArg(String[] args, int id) {
@@ -275,18 +276,24 @@ public class Command extends CommandTreeBase {
         @Override
         public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
             String depositId = getArg(args, 0);
+            ChunkPos pos = new ChunkPos(sender.getPosition());
+            Entry<String, Point> entry;
             if (depositId != null) {
-                ChunkPos pos = new ChunkPos(sender.getPosition());
-                Point pt = WorldData.nearestDeposit(sender.getEntityWorld(), depositId, pos.x, pos.z);
-                if (pt != null) {
-                    ChunkPos depositPos = new ChunkPos((int)pt.x(), (int)pt.y());
-                    int distance = (int)Math.sqrt(depositPos.getDistanceSq(sender.getCommandSenderEntity()));
-                    Command.notifyCommandListener(sender, this, "cmd.cg.find.ok",
-                                                  depositId, depositPos.getXStart(), depositPos.getZStart(), distance);
-                    return;
-                }
+                entry = WorldData.nearestDeposit(sender.getEntityWorld(), depositId, pos.x, pos.z);
+            } else {
+                entry = WorldData.nearestDeposit(sender.getEntityWorld(), pos.x, pos.z);
             }
-            Command.notifyCommandListener(sender, this, "cmd.cg.find.not.found", depositId);
+
+            if (entry == null) {
+                Command.notifyCommandListener(sender, this, "cmd.cg.find.not.found", depositId);
+                return;
+            }
+
+            ChunkPos depositPos = new ChunkPos((int)entry.geometry().x(), (int)entry.geometry().y());
+            int distance = (int)Math.sqrt(depositPos.getDistanceSq(sender.getCommandSenderEntity()));
+            Command.notifyCommandListener(sender, this, "cmd.cg.find.ok",
+                                          entry.value(), depositPos.getXStart(), depositPos.getZStart(), distance);
+
         }
     }
 
@@ -310,6 +317,29 @@ public class Command extends CommandTreeBase {
             } catch (IOException e) {
                 Command.notifyCommandListener(sender, this, "cmd.cg.dump.deposits.error");
                 e.printStackTrace();
+            }
+        }
+    }
+
+    public static class RunScript extends CommandBase {
+        @Override
+        public String getName() {
+            return "scripting";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.scripting.usage";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            String scriptName = getArg(args, 0);
+            if (scriptName != null) {
+                String status = CoreGen.scriptUtil.run(scriptName, sender.getEntityWorld(), sender.getPosition());
+                Command.notifyCommandListener(sender, this, "cmd.cg.scripting", status);
+            } else {
+                Command.notifyCommandListener(sender, this, "cmd.cg.scripting.missing.arg");
             }
         }
     }
