@@ -19,3 +19,11 @@ cmd.cg.get.stats.deposit=Average %s deposit generation time: %s us
 
 cmd.cg.reset.stats=Resets stats for world and deposit generation
 cmd.cg.reset.stats.ok=Stats reset
+
+cmd.cg.find.usage=Find the closest deposit; E.g. /cg find [deposit ID]
+cmd.cg.find.ok=Found %s in the chunk starting at %d,%d (~ %d blocks away)
+cmd.cg.find.not.found=No deposits of %s found
+
+cmd.cg.dump.deposits.usage=Dump a list of all known deposits to coregen.deposits.txt
+cmd.cg.dump.deposits.ok=Dumped %d entries to coregen.deposits.txt
+cmd.cg.dump.deposits.error=Unable to generate dump of deposits; see your server log for details
