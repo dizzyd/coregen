@@ -110,7 +110,7 @@ public class WorldData extends WorldSavedData {
                 count().toBlocking().single() > 0;
     }
 
-    public static synchronized Point nearestDeposit(World world, String depositId, int cx, int cz) {
+    public static synchronized Entry<String, Point> nearestDeposit(World world, String depositId, int cx, int cz) {
         WorldData wd = load(world);
         Point center = Geometries.point(cx, cz);
         Entry<String, Point> pt = wd.deposits.search(center, 1000)
@@ -119,7 +119,18 @@ public class WorldData extends WorldSavedData {
                         Double.compare(lhs.geometry().distance(center), rhs.geometry().distance(center)))
                 .firstOrDefault(null).toBlocking().single();
         if (pt != null) {
-            return pt.geometry();
+            return pt;
+        }
+        return null;
+    }
+
+    public static synchronized Entry<String, Point> nearestDeposit(World world, int cx, int cz) {
+        WorldData wd = load(world);
+        Point center = Geometries.point(cx, cz);
+        Entry<String, Point> pt = wd.deposits.nearest(center, 1000, 1)
+                .firstOrDefault(null).toBlocking().single();
+        if (pt != null) {
+            return pt;
         }
         return null;
     }
