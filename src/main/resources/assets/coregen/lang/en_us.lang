@@ -27,3 +27,6 @@ cmd.cg.find.not.found=No deposits of %s found
 cmd.cg.dump.deposits.usage=Dump a list of all known deposits to coregen.deposits.txt
 cmd.cg.dump.deposits.ok=Dumped %d entries to coregen.deposits.txt
 cmd.cg.dump.deposits.error=Unable to generate dump of deposits; see your server log for details
+
+cmd.cg.script=%s
+cmd.cg.script.missing.error=Missing script
