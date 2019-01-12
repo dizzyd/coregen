@@ -21,10 +21,12 @@ import com.dizzyd.coregen.CoreGen;
 import jdk.nashorn.api.scripting.NashornScriptEngine;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.launchwrapper.Launch;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import org.apache.logging.log4j.core.Core;
 
 import javax.script.*;
 import java.io.File;
@@ -35,13 +37,10 @@ import java.util.function.Function;
 
 public class ScriptUtil {
 
-    private NashornScriptEngine engine;
-
-    private GetBlockFunc blockFunc = new GetBlockFunc();
-    private GetBlockStateFunc blockStateFunc = new GetBlockStateFunc();
+    private ScriptEngineManager engineManager;
 
     public ScriptUtil() {
-        engine = (NashornScriptEngine) new ScriptEngineManager().getEngineByName("nashorn");
+        engineManager = new ScriptEngineManager(null);
     }
 
     public String run(String script, World world, BlockPos position) {
@@ -49,17 +48,19 @@ public class ScriptUtil {
         try {
             FileReader reader = new FileReader(f.getAbsoluteFile());
 
+            ScriptEngine engine = engineManager.getEngineByName("nashorn");
             ScriptContext ctx = engine.getContext();
             Bindings bindings = ctx.getBindings(ScriptContext.ENGINE_SCOPE);
-            bindings.put("block", blockFunc);
-            bindings.put("blockState", blockStateFunc);
+            bindings.put("log", CoreGen.logger);
             bindings.put("world", world);
             bindings.put("pos", position);
 
             engine.eval(reader, ctx);
         } catch (FileNotFoundException ex) {
+            CoreGen.logger.error("Script file not found {}: {}", script, ex.getMessage());
             return String.format("%s not found: %s", script, ex);
         } catch (ScriptException ex) {
+            CoreGen.logger.error("Error invoking script {}: {}", script, ex.getMessage());
             return String.format("%s error: %s", script, ex);
         }
 
@@ -69,35 +70,14 @@ public class ScriptUtil {
     public CompiledScript compile(String script) {
         File f = new File(script);
         try {
+            Compilable compiler = (Compilable)engineManager.getEngineByName("nashorn");
             FileReader reader = new FileReader(f.getAbsoluteFile());
-            return engine.compile(reader);
+            return compiler.compile(reader);
         } catch (FileNotFoundException ex) {
             CoreGen.logger.error("Script not found: {}", script);
         } catch (ScriptException ex) {
             CoreGen.logger.error("Script {} failed to compile: {}", script, ex);
         }
         return null;
-    }
-
-    private static class GetBlockFunc implements Function<String, Block> {
-        @Override
-        public Block apply(String blockName) {
-            ResourceLocation loc = new ResourceLocation(blockName);
-            if (ForgeRegistries.BLOCKS.containsKey(loc)) {
-                return ForgeRegistries.BLOCKS.getValue(loc);
-            }
-            return null;
-        }
-    }
-
-    private static class GetBlockStateFunc implements BiFunction<String, Integer, IBlockState> {
-        @Override
-        public IBlockState apply(String blockName, Integer meta) {
-            ResourceLocation loc = new ResourceLocation(blockName);
-            if (ForgeRegistries.BLOCKS.containsKey(loc)) {
-                return ForgeRegistries.BLOCKS.getValue(loc).getStateFromMeta(meta);
-            }
-            return null;
-        }
     }
 }

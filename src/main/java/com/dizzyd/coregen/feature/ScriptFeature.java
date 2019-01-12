@@ -18,6 +18,7 @@
 package com.dizzyd.coregen.feature;
 
 import com.dizzyd.coregen.CoreGen;
+import com.dizzyd.coregen.scripting.Position;
 import com.typesafe.config.Config;
 import jdk.nashorn.api.scripting.JSObject;
 import net.minecraft.util.math.BlockPos;
@@ -124,11 +125,11 @@ public class ScriptFeature extends Feature {
             return world;
         }
 
-        public BlockPos randomPos(int chunkX, int chunkZ) {
+        public Position randomPos(int chunkX, int chunkZ) {
             int x = (chunkX * 16 + 8) + random.nextInt(16);
             int z = (chunkZ * 16 + 8) + random.nextInt(16);
             int y = feature.ydist.chooseLevel(world, x, z);
-            return new BlockPos(x, y, z);
+            return new Position(x, y, z);
         }
 
         public void placeBlock(double x, double y, double z) {
