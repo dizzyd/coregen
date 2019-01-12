@@ -223,6 +223,8 @@ public class Command extends CommandTreeBase {
             if (depositId == null) {
                 LongSummaryStatistics stats = CoreGen.worldGen.getStats();
                 String avgus = String.format("%4.0f", stats.getAverage() * 1000);
+                CoreGen.logger.info("Global stats: {} chunks, {} / {} / {}", stats.getCount(),
+                                    stats.getMin(), stats.getAverage(), stats.getMax());
                 Command.notifyCommandListener(sender, this, "cmd.cg.get.stats.global", avgus);
                 return;
             }
@@ -235,6 +237,8 @@ public class Command extends CommandTreeBase {
 
             LongSummaryStatistics stats = deposit.getStats();
             String avgus = String.format("%4.0f", stats.getAverage() * 1000);
+            CoreGen.logger.info("Deposit {} stats: {} chunks, {} / {} / {}", depositId, stats.getCount(),
+                                stats.getMin(), stats.getAverage(), stats.getMax());
             Command.notifyCommandListener(sender, this, "cmd.cg.get.stats.deposit", depositId, avgus);
         }
     }
