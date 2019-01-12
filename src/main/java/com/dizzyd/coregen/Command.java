@@ -324,12 +324,12 @@ public class Command extends CommandTreeBase {
     public static class RunScript extends CommandBase {
         @Override
         public String getName() {
-            return "scripting";
+            return "script";
         }
 
         @Override
         public String getUsage(ICommandSender sender) {
-            return "cmd.cg.scripting.usage";
+            return "cmd.cg.script.usage";
         }
 
         @Override
@@ -337,9 +337,9 @@ public class Command extends CommandTreeBase {
             String scriptName = getArg(args, 0);
             if (scriptName != null) {
                 String status = CoreGen.scriptUtil.run(scriptName, sender.getEntityWorld(), sender.getPosition());
-                Command.notifyCommandListener(sender, this, "cmd.cg.scripting", status);
+                Command.notifyCommandListener(sender, this, "cmd.cg.script", status);
             } else {
-                Command.notifyCommandListener(sender, this, "cmd.cg.scripting.missing.arg");
+                Command.notifyCommandListener(sender, this, "cmd.cg.script.missing.arg");
             }
         }
     }
