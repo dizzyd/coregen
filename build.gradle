@@ -66,7 +66,7 @@ jar {
     configurations.shade.each { dep ->
         from(project.zipTree(dep)) {
             exclude 'META-INF', 'META-INF/**'
-            exclude 'org/mozilla/javascript/tools/**', 'org/mozilla/javascript/xml/**', 'org/mozilla/javascript/xmlimpl/**'
+            exclude 'org/mozilla/javascript/tools/**'
         }
     }
 }
@@ -74,7 +74,7 @@ jar {
 reobfJar {
     addExtraSrgLine "PK: com/typesafe/config coregen/shade/com/typesafe/config"
     addExtraSrgLine "PK: rx coregen/shade/rx"
-    addExtraSrgLine "PK: org/mozilla/javascript coregen/shade/javascript"
-    addExtraSrgLine "PK: org/mozilla/classfile coregen/shade/classfile"
+//    addExtraSrgLine "PK: org/mozilla/javascript coregen/shade/javascript"
+//    addExtraSrgLine "PK: org/mozilla/classfile coregen/shade/classfile"
     addExtraSrgLine "PK: com/github/davidmoten/rtree coregen/shade/rtree"
 }
