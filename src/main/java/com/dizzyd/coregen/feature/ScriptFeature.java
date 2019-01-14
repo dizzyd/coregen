@@ -19,30 +19,28 @@ package com.dizzyd.coregen.feature;
 
 import com.dizzyd.coregen.CoreGen;
 import com.dizzyd.coregen.scripting.Position;
+import com.dizzyd.coregen.util.BlockStateParser;
 import com.typesafe.config.Config;
-import jdk.nashorn.api.scripting.JSObject;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
+import org.apache.logging.log4j.Logger;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.Scriptable;
 
-import javax.script.Bindings;
-import javax.script.CompiledScript;
-import javax.script.ScriptException;
 import java.util.Random;
 
 public class ScriptFeature extends Feature {
-    private CompiledScript script;
+    private Script script;
     private int errorCount = 0;
-
-    private ThreadLocal<Context> ctxThreadLocal = new ThreadLocal<>();
-
+    private ThreadLocal<ScriptingContext> ctxThreadLocal = new ThreadLocal<>();
     private String filename;
 
-
-    public ScriptFeature() {
-    }
 
     public String getFilename() {
         return filename;
@@ -51,8 +49,8 @@ public class ScriptFeature extends Feature {
     public void setFilename(String filename) {
         this.filename = filename;
 
-        // Try to load/compile the script; a compiled script can be shared across
-        // threads, but all bindings must be thread-local
+        // Try to load/compile the script; this can be safely shared
+        // across
         script = CoreGen.scriptUtil.compile(filename);
     }
 
@@ -67,10 +65,10 @@ public class ScriptFeature extends Feature {
         // and the console. The errorCount is reset on each successful run and incremented on each failed
         // run, such that after ~4 sequential errors, it will disable the chunk generator completely.
         try {
-            Context ctx = getContext(world, this, random);
-            ctx.generateFn.call(null, ctx, chunkX, chunkZ);
+            ScriptingContext ctx = getContext(world, this, random);
+            ctx.generate(chunkX, chunkZ);
             errorCount = 0; // Successful invocation, reset error counter
-        } catch (ScriptException e) {
+        } catch (RuntimeException e) {
             CoreGen.logger.error("Failed to generate chunk {}, {} using {}: {}", chunkX, chunkZ, filename, e.getMessage());
             if (errorCount < 3) {
                 errorCount++;
@@ -81,10 +79,10 @@ public class ScriptFeature extends Feature {
         }
     }
 
-    private Context getContext(World world, Feature feature, Random random) throws ScriptException {
-        Context ctx = ctxThreadLocal.get();
+    private ScriptingContext getContext(World world, Feature feature, Random random) {
+        ScriptingContext ctx = ctxThreadLocal.get();
         if (ctx == null) {
-            ctx = new Context(script);
+            ctx = new ScriptingContext(script);
             ctxThreadLocal.set(ctx);
         }
 
@@ -92,21 +90,35 @@ public class ScriptFeature extends Feature {
         return ctx;
     }
 
-    public class Context {
+    public class ScriptingContext implements com.dizzyd.coregen.scripting.Context {
         World world;
         Feature feature;
         Random random;
 
-        Bindings bindings;
-        JSObject generateFn;
+        Context ctx;
+        Scriptable scope;
+        Function generateFn;
 
-        Context(CompiledScript script) throws ScriptException {
-            // Context objects are expected to be instantiated per-thread. We evaluate the compiled script
-            // in the context of fresh bindings and save the pointer to the generate function from within
-            // the script for future invocation
-            bindings = script.getEngine().createBindings();
-            script.eval(bindings);
-            generateFn = (JSObject)bindings.get("generate");
+        ScriptingContext(Script script) {
+            ctx = Context.enter();
+            scope = ctx.initStandardObjects();
+
+            // Evaluate the script so that the scope has our generate function
+            script.exec(ctx, scope);
+            Object fn = scope.get("generate", scope);
+            if (fn instanceof Function) {
+                generateFn = (Function)fn;
+            }
+
+        }
+
+        protected void generate(int cx, int cz) {
+            com.dizzyd.coregen.scripting.Context runCtx = this;
+            generateFn.call(ctx, scope, scope, new Object[]{runCtx, cx, cz});
+        }
+
+        public Logger getLogger() {
+            return CoreGen.logger;
         }
 
         public Feature getFeature() {
@@ -121,10 +133,6 @@ public class ScriptFeature extends Feature {
             return feature.config;
         }
 
-        public World getWorld() {
-            return world;
-        }
-
         public Position randomPos(int chunkX, int chunkZ) {
             int x = (chunkX * 16 + 8) + random.nextInt(16);
             int z = (chunkZ * 16 + 8) + random.nextInt(16);
@@ -136,8 +144,21 @@ public class ScriptFeature extends Feature {
             world.setBlockState(new BlockPos(x, y, z), feature.blocks.chooseBlock(random), 2|16);
         }
 
-        public void log(String msg) {
+        public IBlockState blockFromString(String blockResource) {
+            try {
+                return BlockStateParser.parse(blockResource);
+            } catch (BlockStateParser.InvalidBlockId e) {
+                return null;
+            }
+        }
+
+        public void placeBlock(double x, double y, double z, IBlockState block) {
+            world.setBlockState(new BlockPos(x, y, z), block, 2|16);
+        }
+
+        public void chatLog(String msg) {
             world.getMinecraftServer().getPlayerList().sendMessage(new TextComponentString(msg));
         }
     }
+
 }

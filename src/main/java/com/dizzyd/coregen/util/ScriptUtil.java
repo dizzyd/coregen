@@ -18,66 +18,58 @@
 package com.dizzyd.coregen.util;
 
 import com.dizzyd.coregen.CoreGen;
-import jdk.nashorn.api.scripting.NashornScriptEngine;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.launchwrapper.Launch;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import org.apache.logging.log4j.core.Core;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.Scriptable;
 
-import javax.script.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.io.IOException;
 
 public class ScriptUtil {
-
-    private ScriptEngineManager engineManager;
-
-    public ScriptUtil() {
-        engineManager = new ScriptEngineManager(null);
-    }
 
     public String run(String script, World world, BlockPos position) {
         File f = new File(script);
         try {
             FileReader reader = new FileReader(f.getAbsoluteFile());
 
-            ScriptEngine engine = engineManager.getEngineByName("nashorn");
-            ScriptContext ctx = engine.getContext();
-            Bindings bindings = ctx.getBindings(ScriptContext.ENGINE_SCOPE);
-            bindings.put("log", CoreGen.logger);
-            bindings.put("world", world);
-            bindings.put("pos", position);
+            Context ctx = Context.enter();
+            Scriptable scope = ctx.initStandardObjects();
 
-            engine.eval(reader, ctx);
+            scope.put("log", scope, CoreGen.logger);
+
+            ctx.evaluateReader(scope, reader, f.getName(), 0, null);
         } catch (FileNotFoundException ex) {
-            CoreGen.logger.error("Script file not found {}: {}", script, ex.getMessage());
+            CoreGen.logger.error("Script `file not found {}: {}", script, ex.getMessage());
             return String.format("%s not found: %s", script, ex);
-        } catch (ScriptException ex) {
+        } catch (IOException ex) {
             CoreGen.logger.error("Error invoking script {}: {}", script, ex.getMessage());
             return String.format("%s error: %s", script, ex);
+        } finally {
+            Context.exit();
         }
 
         return String.format("%s: ok", script);
     }
 
-    public CompiledScript compile(String script) {
-        File f = new File(script);
+    public Script compile(String filename) {
+        Script result = null;
+        File f = new File(filename);
         try {
-            Compilable compiler = (Compilable)engineManager.getEngineByName("nashorn");
+            Context ctx = Context.enter();
             FileReader reader = new FileReader(f.getAbsoluteFile());
-            return compiler.compile(reader);
-        } catch (FileNotFoundException ex) {
-            CoreGen.logger.error("Script not found: {}", script);
-        } catch (ScriptException ex) {
-            CoreGen.logger.error("Script {} failed to compile: {}", script, ex);
+            result = ctx.compileReader(reader, filename, 0, null);
+        } catch (FileNotFoundException e) {
+            CoreGen.logger.error("Script not found: {}", filename);
+        } catch (IOException e) {
+            CoreGen.logger.error("Script {} failed to compile: {}", filename, e);
+        } finally {
+            Context.exit();
         }
-        return null;
+        return result;
     }
+
 }
