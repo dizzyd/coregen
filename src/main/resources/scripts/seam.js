@@ -1,16 +1,5 @@
 
-
-var ResourceLocation = Java.type("net.minecraft.util.ResourceLocation");
-var ForgeRegistries = Java.type("net.minecraftforge.fml.common.registry.ForgeRegistries");
-var TextComponentString = Java.type("net.minecraft.util.text.TextComponentString");
-
-function BlockState(id) {
-    var rl = new ResourceLocation(id);
-    return ForgeRegistries.BLOCKS.getValue(rl).getStateFromMeta(0);
-}
-
-// Explicitly select int-based constructor for BlockPos
-var BlockPos = Java.type("net.minecraft.util.math.BlockPos")["(int, int, int)"];
+var Position = Packages.com.dizzyd.coregen.scripting.Position;
 
 Math.radians = function (degrees) {
     return degrees * Math.PI / 180;
@@ -26,7 +15,7 @@ function generate(ctx, cx, cz) {
     var yaw = Math.radians(ctx.random.nextInt(360))
     var pitch = Math.radians(270);
 
-    pos = new BlockPos((cx * 16 + 8) + ctx.random.nextInt(16),
+    pos = new Position((cx * 16 + 8) + ctx.random.nextInt(16),
         80,
         (cz * 16 + 8) + ctx.random.nextInt(16));
 
@@ -43,7 +32,7 @@ function generate(ctx, cx, cz) {
                 xPos = x + Math.ceil((i * Math.cos(pitch) * Math.cos(yaw)));
                 zPos = z + Math.ceil((i * Math.cos(pitch) * Math.sin(yaw)));
                 yPos = pos.y + Math.ceil((i * Math.sin(pitch)));
-                ctx.world.setBlockState(new BlockPos(xPos, yPos, zPos), ctx.feature.blocks.chooseBlock(ctx.random), 2 | 16);
+                ctx.placeBlock(xPos, yPos, zPos)
                 if (total++ > size) {
                     break outerLoop;
                 }
@@ -51,6 +40,5 @@ function generate(ctx, cx, cz) {
         }
     }
 
-    ctx.world.setBlockState(new BlockPos(pos.x, pos.y, pos.z), BlockState("minecraft:redstone_ore"), 2 | 16);
-
+    ctx.placeBlock(pos.x, pos.y, pos.z, ctx.blockFromString("minecraft:redstone_ore"));
 }

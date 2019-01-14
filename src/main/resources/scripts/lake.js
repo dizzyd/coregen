@@ -1,5 +1,5 @@
 
-var SimplexNoise = Java.type("com.dizzyd.coregen.util.SimplexNoise");
+var SimplexNoise = Packages.com.dizzyd.coregen.util.SimplexNoise;
 
 function generate(ctx, cx, cz) {
     var pos = ctx.randomPos(cx, cz);
