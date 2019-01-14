@@ -40,6 +40,7 @@ dependencies {
     shade "com.typesafe:config:1.3.3"
     shade "com.github.davidmoten:rtree:0.8.6"
     shade "com.github.davidmoten:flatbuffers-java:1.3.0.1"
+    shade "org.mozilla:rhino:1.7.10"
 }
 
 processResources {
@@ -65,10 +66,15 @@ jar {
     configurations.shade.each { dep ->
         from(project.zipTree(dep)) {
             exclude 'META-INF', 'META-INF/**'
+            exclude 'org/mozilla/javascript/tools/**', 'org/mozilla/javascript/xml/**', 'org/mozilla/javascript/xmlimpl/**'
         }
     }
 }
 
 reobfJar {
     addExtraSrgLine "PK: com/typesafe/config coregen/shade/com/typesafe/config"
+    addExtraSrgLine "PK: rx coregen/shade/rx"
+    addExtraSrgLine "PK: org/mozilla/javascript coregen/shade/javascript"
+    addExtraSrgLine "PK: org/mozilla/classfile coregen/shade/classfile"
+    addExtraSrgLine "PK: com/github/davidmoten/rtree coregen/shade/rtree"
 }
