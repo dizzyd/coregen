@@ -28,8 +28,13 @@ import java.util.List;
 public class YLevelUnderwater extends YLevelDistribution {
 
     private int max;
+    private int min;
     private List<String> liquids;
     private IdentityHashMap<IBlockState, Boolean> liquidStates;
+
+    public int getMin() { return min; }
+
+    public void setMin(int min) { this.min = min; }
 
     public int getMax() {
         return max;
@@ -53,14 +58,14 @@ public class YLevelUnderwater extends YLevelDistribution {
             if (!bs.getMaterial().isLiquid()) {
                 CoreGen.logger.warn("WARNING: Setting up underwater y-level; {} is not a liquid block!");
             }
-            liquidStates.put(BlockStateParser.parse(id), true);
+            liquidStates.put(bs, true);
         }
     }
 
     @Override
     public int chooseLevel(World world, int x, int z) {
-        // Starting at x,0,z, scan up for first liquid block on our list of liquids
-        BlockPos p = new BlockPos(x, 0, z);
+        // Starting at x,min,z, scan up for first liquid block on our list of liquids
+        BlockPos p = new BlockPos(x, min, z);
         while (p.getY() < max && !liquidStates.containsKey(world.getBlockState(p))) {
             p = p.up();
         }

@@ -34,8 +34,9 @@ public class YLevelSurface extends YLevelDistribution {
 
     @Override
     public int chooseLevel(World w, int x, int z) {
-        // Starting at x,0,z, scan up for first air-gapped (aka "surface")
-        BlockPos p = new BlockPos(x, 0, z);
+        // Starting at x,60,z, scan up for first air-gapped (aka "surface")
+        // N.B. "sea-level" is 64, so start slightly below that
+        BlockPos p = new BlockPos(x, 60, z);
         while (p.getY() < max && !w.isAirBlock(p)) {
             p = p.up();
         }
