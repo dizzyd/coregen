@@ -22,6 +22,8 @@ import com.dizzyd.coregen.util.WeightedBlockList;
 import com.dizzyd.coregen.ylevel.YLevelDistribution;
 import com.typesafe.config.Config;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -70,6 +72,30 @@ public abstract class Feature {
         this.config = config;
         this.blocks = blocks;
         this.ydist = dist;
+    }
+
+    public void placeBlock(World world, Random random, double x, double y, double z) {
+        placeBlock(world, x, y, z, blocks.chooseBlock(random));
+    }
+
+    public void placeBlock(World world, double x, double y, double z, IBlockState block) {
+        BlockPos pos = new BlockPos(x, y, z);
+        IBlockState curr = world.getBlockState(pos);
+        if ((targets.isEmpty() && curr.getMaterial().isSolid()) || targets.containsKey(curr)) {
+            world.setBlockState(pos, block, 2 | 16);
+        }
+    }
+
+    public IBlockState blockFromString(String blockResource) {
+        try {
+            return BlockStateParser.parse(blockResource);
+        } catch (BlockStateParser.InvalidBlockId e) {
+            return null;
+        }
+    }
+
+    public void chatLog(World world, String msg) {
+        world.getMinecraftServer().getPlayerList().sendMessage(new TextComponentString(msg));
     }
 
     public abstract void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider);

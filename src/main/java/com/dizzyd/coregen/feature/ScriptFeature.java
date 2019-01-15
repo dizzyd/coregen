@@ -141,27 +141,19 @@ public class ScriptFeature extends Feature {
         }
 
         public void placeBlock(double x, double y, double z) {
-            placeBlock(x, y, z, feature.blocks.chooseBlock(random));
+            feature.placeBlock(world, random, x, y, z);
         }
 
         public void placeBlock(double x, double y, double z, IBlockState block) {
-            BlockPos pos = new BlockPos(x, y, z);
-            IBlockState curr = world.getBlockState(pos);
-            if ((targets.isEmpty() && curr.getMaterial().isSolid()) || targets.containsKey(curr)) {
-                world.setBlockState(pos, block, 2 | 16);
-            }
+            feature.placeBlock(world, x, y, z, block);
         }
 
         public IBlockState blockFromString(String blockResource) {
-            try {
-                return BlockStateParser.parse(blockResource);
-            } catch (BlockStateParser.InvalidBlockId e) {
-                return null;
-            }
+            return feature.blockFromString(blockResource);
         }
 
         public void chatLog(String msg) {
-            world.getMinecraftServer().getPlayerList().sendMessage(new TextComponentString(msg));
+            feature.chatLog(world, msg);
         }
     }
 
