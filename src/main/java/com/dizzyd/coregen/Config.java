@@ -58,9 +58,12 @@ public class Config {
         defaultLiquids.add(Blocks.WATER.getRegistryName().toString());
         defaults.put("liquids", defaultLiquids);
         defaults.put("max", 128);
+        defaults.put("min", 60);
         defaultYLevels = ConfigFactory.parseMap(defaults);
 
         defaults = new HashMap<String, Object>();
+        List<String> defaultTargets = new ArrayList<>();
+        defaults.put("targets", defaultTargets);
         defaults.put("sparse", false);
         defaultScriptFeature = ConfigFactory.parseMap(defaults);
     }

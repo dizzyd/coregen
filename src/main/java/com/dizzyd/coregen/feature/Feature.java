@@ -17,13 +17,18 @@
 
 package com.dizzyd.coregen.feature;
 
+import com.dizzyd.coregen.util.BlockStateParser;
 import com.dizzyd.coregen.util.WeightedBlockList;
 import com.dizzyd.coregen.ylevel.YLevelDistribution;
 import com.typesafe.config.Config;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
 
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Random;
 
 public abstract class Feature {
@@ -31,6 +36,9 @@ public abstract class Feature {
     protected WeightedBlockList blocks;
     protected YLevelDistribution ydist;
     protected Config config;
+
+    protected IdentityHashMap<IBlockState, Boolean> targets;
+    private List<String> rawTargets;
 
     public String getType() {
         return type;
@@ -42,6 +50,20 @@ public abstract class Feature {
 
     public WeightedBlockList getBlocks() {
         return blocks;
+    }
+
+    public void setTargets(List<String> targets) {
+        this.targets = new IdentityHashMap<IBlockState, Boolean>();
+        this.rawTargets = new ArrayList<>();
+
+        for (String id: targets) {
+            this.targets.put(BlockStateParser.parse(id), true);
+            this.rawTargets.add(id);
+        }
+    }
+
+    public List<String> getTargets() {
+        return this.rawTargets;
     }
 
     public void init(Config config, WeightedBlockList blocks, YLevelDistribution dist) {

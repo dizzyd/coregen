@@ -141,7 +141,15 @@ public class ScriptFeature extends Feature {
         }
 
         public void placeBlock(double x, double y, double z) {
-            world.setBlockState(new BlockPos(x, y, z), feature.blocks.chooseBlock(random), 2|16);
+            placeBlock(x, y, z, feature.blocks.chooseBlock(random));
+        }
+
+        public void placeBlock(double x, double y, double z, IBlockState block) {
+            BlockPos pos = new BlockPos(x, y, z);
+            IBlockState curr = world.getBlockState(pos);
+            if ((targets.isEmpty() && curr.getMaterial().isSolid()) || targets.containsKey(curr)) {
+                world.setBlockState(pos, block, 2 | 16);
+            }
         }
 
         public IBlockState blockFromString(String blockResource) {
@@ -150,10 +158,6 @@ public class ScriptFeature extends Feature {
             } catch (BlockStateParser.InvalidBlockId e) {
                 return null;
             }
-        }
-
-        public void placeBlock(double x, double y, double z, IBlockState block) {
-            world.setBlockState(new BlockPos(x, y, z), block, 2|16);
         }
 
         public void chatLog(String msg) {
