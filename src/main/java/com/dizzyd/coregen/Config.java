@@ -26,6 +26,7 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValue;
 import net.minecraft.init.Blocks;
+import net.minecraftforge.event.terraingen.OreGenEvent;
 
 import java.io.File;
 import java.util.*;
@@ -48,6 +49,7 @@ public class Config {
 
         defaults = new HashMap<String, Object>();
         defaults.put("deposits", new ArrayList<ConfigValue>());
+        defaults.put("disableDefaultGeneration", Arrays.asList("COAL", "DIAMOND", "GOLD", "IRON", "LAPIS", "REDSTONE"));
         defaultRoot = ConfigFactory.parseMap(defaults);
 
         defaults = new HashMap<String, Object>();
@@ -63,10 +65,15 @@ public class Config {
     }
 
     private Map<String, Deposit> deposits = new HashMap<String, Deposit>();
+    private Set<OreGenEvent.GenerateMinable.EventType> disabledOreGen = new HashSet<>();
 
     public Config(File configDir) {
         com.typesafe.config.Config cfg = ConfigFactory.parseFile(new File(configDir, "coregen.conf"));
         cfg = cfg.withFallback(defaultRoot);
+
+        // Load list of disabled ore gen events
+        disabledOreGen.addAll(cfg.getEnumList(OreGenEvent.GenerateMinable.EventType.class, "disableDefaultGeneration"));
+
         for (ConfigValue v : cfg.getList("deposits")) {
 
             // Construct base deposit object from config
@@ -99,6 +106,10 @@ public class Config {
 
     public Map<String, Deposit> getDeposits() {
         return deposits;
+    }
+
+    public boolean isDefaultOreDisabled(OreGenEvent.GenerateMinable.EventType e) {
+        return disabledOreGen.contains(e);
     }
 
     private WeightedBlockList getWeightedBlocks(com.typesafe.config.Config cfg) {

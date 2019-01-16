@@ -95,19 +95,8 @@ public class CoreGen
 
     @SubscribeEvent
     public void onGenerateMineable(OreGenEvent.GenerateMinable event) {
-        OreGenEvent.GenerateMinable.EventType type = event.getType();
-        switch (event.getType()) {
-            case COAL:
-            case DIAMOND:
-            case GOLD:
-            case IRON:
-            case LAPIS:
-            case REDSTONE:
-            case QUARTZ:
-            case EMERALD:
-                event.setResult(Event.Result.DENY);
-            default:
-                break;
+        if (config.isDefaultOreDisabled(event.getType())) {
+            event.setResult(Event.Result.DENY);
         }
     }
 
