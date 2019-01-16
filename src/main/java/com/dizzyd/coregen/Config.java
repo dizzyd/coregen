@@ -28,10 +28,7 @@ import com.typesafe.config.ConfigValue;
 import net.minecraft.init.Blocks;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Config {
 
@@ -46,7 +43,7 @@ public class Config {
         defaults.put("enabled", true);
         defaults.put("restrictions.min-deposit-distance", 0);
         defaults.put("restrictions.biomes", new ArrayList<String>());
-        defaults.put("restrictions.dimensions", new ArrayList<Integer>());
+        defaults.put("restrictions.dimensions", Arrays.asList(0));
         defaultDeposit = ConfigFactory.parseMap(defaults);
 
         defaults = new HashMap<String, Object>();
@@ -54,16 +51,13 @@ public class Config {
         defaultRoot = ConfigFactory.parseMap(defaults);
 
         defaults = new HashMap<String, Object>();
-        List<String> defaultLiquids = new ArrayList<>();
-        defaultLiquids.add(Blocks.WATER.getRegistryName().toString());
-        defaults.put("liquids", defaultLiquids);
+        defaults.put("liquids", Arrays.asList(Blocks.WATER.getRegistryName().toString()));
         defaults.put("max", 128);
         defaults.put("min", 60);
         defaultYLevels = ConfigFactory.parseMap(defaults);
 
         defaults = new HashMap<String, Object>();
-        List<String> defaultTargets = new ArrayList<>();
-        defaults.put("targets", defaultTargets);
+        defaults.put("targets", new ArrayList<String>());
         defaults.put("sparse", false);
         defaultScriptFeature = ConfigFactory.parseMap(defaults);
     }
