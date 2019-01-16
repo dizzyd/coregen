@@ -42,7 +42,12 @@ def runNoOutput(cmd):
         return process.returncode
 
 # Uploading to CF requires a API token (CF_API_TOKEN)
-headers = {'X-Api-Token': os.getenv("CF_API_TOKEN")}
+apiToken = os.getenv("CF_API_TOKEN")
+if apiToken == None or len(apiToken) < 1:
+    print("No CF_API_TOKEN available!")
+    sys.exit(1)
+
+headers = {'X-Api-Token': apiToken}
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-project", help="Mod project ID", required=True)
