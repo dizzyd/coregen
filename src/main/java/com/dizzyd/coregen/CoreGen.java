@@ -64,10 +64,6 @@ public class CoreGen
         logger = event.getModLog();
         scriptUtil = new ScriptUtil();
         configDirectory = event.getModConfigurationDirectory();
-
-        // Add nashorn to the default class loader exclusion list so it doesn't
-        // get mangled when trying to load the class (since it's part of the JDK)
-        Launch.classLoader.addClassLoaderExclusion("jdk.nashorn.");
     }
 
     @EventHandler
