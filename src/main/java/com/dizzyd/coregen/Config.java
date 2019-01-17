@@ -49,10 +49,11 @@ public class Config {
 
         defaults = new HashMap<String, Object>();
         defaults.put("deposits", new ArrayList<ConfigValue>());
-        defaults.put("disableDefaultGeneration", Arrays.asList("COAL", "DIAMOND", "GOLD", "IRON", "LAPIS", "REDSTONE"));
+        defaults.put("disableGeneration", new ArrayList<String>());
         defaultRoot = ConfigFactory.parseMap(defaults);
 
         defaults = new HashMap<String, Object>();
+        defaults.put("type", "uniform");
         defaults.put("liquids", Arrays.asList(Blocks.WATER.getRegistryName().toString()));
         defaults.put("max", 128);
         defaults.put("min", 60);
@@ -72,7 +73,7 @@ public class Config {
         cfg = cfg.withFallback(defaultRoot);
 
         // Load list of disabled ore gen events
-        disabledOreGen.addAll(cfg.getEnumList(OreGenEvent.GenerateMinable.EventType.class, "disableDefaultGeneration"));
+        disabledOreGen.addAll(cfg.getEnumList(OreGenEvent.GenerateMinable.EventType.class, "disableGeneration"));
 
         for (ConfigValue v : cfg.getList("deposits")) {
 
