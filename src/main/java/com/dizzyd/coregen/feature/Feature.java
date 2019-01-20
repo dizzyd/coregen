@@ -74,16 +74,18 @@ public abstract class Feature {
         this.ydist = dist;
     }
 
-    public void placeBlock(World world, Random random, double x, double y, double z) {
-        placeBlock(world, x, y, z, blocks.chooseBlock(random));
+    public boolean placeBlock(World world, Random random, double x, double y, double z) {
+        return placeBlock(world, x, y, z, blocks.chooseBlock(random));
     }
 
-    public void placeBlock(World world, double x, double y, double z, IBlockState block) {
+    public boolean placeBlock(World world, double x, double y, double z, IBlockState block) {
         BlockPos pos = new BlockPos(x, y, z);
         IBlockState curr = world.getBlockState(pos);
         if ((targets.isEmpty() && curr.getMaterial().isSolid()) || targets.containsKey(curr)) {
             world.setBlockState(pos, block, 2 | 16);
+            return true;
         }
+        return false;
     }
 
     public IBlockState blockFromString(String blockResource) {
@@ -98,6 +100,6 @@ public abstract class Feature {
         world.getMinecraftServer().getPlayerList().sendMessage(new TextComponentString(msg));
     }
 
-    public abstract void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider);
+    public abstract int generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider);
 
 }

@@ -55,18 +55,19 @@ public class ScriptFeature extends Feature {
     }
 
     @Override
-    public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+    public int generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
 
         if (script == null) {
-            return;
+            return 0;
         }
 
         // Invoke the "generate" function in the compiled script. We do track sequential failures to avoid spamming the engine
         // and the console. The errorCount is reset on each successful run and incremented on each failed
         // run, such that after ~4 sequential errors, it will disable the chunk generator completely.
+        int placedBlocks;
         try {
             ScriptingContext ctx = getContext(world, this, random);
-            ctx.generate(chunkX, chunkZ);
+            placedBlocks = ctx.generate(chunkX, chunkZ);
             errorCount = 0; // Successful invocation, reset error counter
         } catch (RuntimeException e) {
             CoreGen.logger.error("Failed to generate chunk {}, {} using {}: {}", chunkX, chunkZ, filename, e.getMessage());
@@ -76,7 +77,10 @@ public class ScriptFeature extends Feature {
                 CoreGen.logger.error("Disabling chunk gen {}; too many sequential failures!", filename);
                 script = null;
             }
+            return 0;
         }
+
+        return placedBlocks;
     }
 
     private ScriptingContext getContext(World world, Feature feature, Random random) {
@@ -99,6 +103,8 @@ public class ScriptFeature extends Feature {
         Scriptable scope;
         Function generateFn;
 
+        int placedBlocks;
+
         ScriptingContext(Script script) {
             ctx = Context.enter();
             scope = ctx.initStandardObjects();
@@ -109,12 +115,13 @@ public class ScriptFeature extends Feature {
             if (fn instanceof Function) {
                 generateFn = (Function)fn;
             }
-
         }
 
-        protected void generate(int cx, int cz) {
+        protected int generate(int cx, int cz) {
+            placedBlocks = 0;
             com.dizzyd.coregen.scripting.Context runCtx = this;
             generateFn.call(ctx, scope, scope, new Object[]{runCtx, cx, cz});
+            return placedBlocks;
         }
 
         public Logger getLogger() {
@@ -140,12 +147,16 @@ public class ScriptFeature extends Feature {
             return new Position(x, y, z);
         }
 
-        public void placeBlock(double x, double y, double z) {
-            feature.placeBlock(world, random, x, y, z);
+        public boolean placeBlock(double x, double y, double z) {
+            boolean placed = feature.placeBlock(world, random, x, y, z);
+            if (placed) placedBlocks++;
+            return placed;
         }
 
-        public void placeBlock(double x, double y, double z, IBlockState block) {
-            feature.placeBlock(world, x, y, z, block);
+        public boolean placeBlock(double x, double y, double z, IBlockState block) {
+            boolean placed = feature.placeBlock(world, x, y, z, block);
+            if (placed) placedBlocks++;
+            return placed;
         }
 
         public IBlockState blockFromString(String blockResource) {

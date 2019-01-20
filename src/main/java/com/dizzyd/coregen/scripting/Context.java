@@ -19,11 +19,11 @@ public interface Context {
 
     Position randomPos(int cx, int cz);
 
-    void placeBlock(double x, double y, double z);
+    boolean placeBlock(double x, double y, double z);
 
     IBlockState blockFromString(String blockString);
 
-    void placeBlock(double x, double y, double z, IBlockState block);
+    boolean placeBlock(double x, double y, double z, IBlockState block);
 
     void chatLog(String msg);
 

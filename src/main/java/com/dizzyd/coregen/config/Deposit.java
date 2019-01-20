@@ -87,15 +87,16 @@ public class Deposit {
             return false;
         }
 
+        int blocksPlaced = 0;
         for (Feature f : features) {
-            f.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider);
+            blocksPlaced += f.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider);
         }
 
         synchronized (stats) {
             stats.accept(System.currentTimeMillis() - startTime);
         }
 
-        return true;
+        return blocksPlaced > 0;
     }
 
     private boolean canGenerate(World world, int chunkX, int chunkZ, IChunkProvider chunkProvider) {
