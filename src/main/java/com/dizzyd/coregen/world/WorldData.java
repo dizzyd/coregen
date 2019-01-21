@@ -103,6 +103,12 @@ public class WorldData extends WorldSavedData {
         wd.markDirty();
     }
 
+    public static synchronized void deleteDeposit(World world, String depositId, int cx, int cz) {
+        WorldData wd = load(world);
+        wd.deposits = wd.deposits.delete(depositId, Geometries.point(cx, cz));
+        wd.markDirty();
+    }
+
     public static synchronized boolean depositInDistance(World world, String depositId, int cx, int cz, int distance) {
         WorldData wd = load(world);
         return wd.deposits.search(Geometries.point(cx, cz), distance).

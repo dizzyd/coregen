@@ -80,12 +80,8 @@ public class Deposit {
         features.add(f);
     }
 
-    public boolean generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider, boolean force) {
+    public boolean generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
         long startTime = System.currentTimeMillis();
-
-        if (!force && !canGenerate(world, chunkX, chunkZ, chunkProvider)) {
-            return false;
-        }
 
         int blocksPlaced = 0;
         for (Feature f : features) {
@@ -99,10 +95,16 @@ public class Deposit {
         return blocksPlaced > 0;
     }
 
-    private boolean canGenerate(World world, int chunkX, int chunkZ, IChunkProvider chunkProvider) {
+    public boolean canGenerate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
         // If this deposit is not enabled, don't allow it to generate automatically
         // N.B. if the deposit generation is being forced this flag will be ignored
         if (!enabled) {
+            return false;
+        }
+
+        // See if the odds are in our favor...
+        int sample = random.nextInt(100);
+        if (sample > getChunkChance()) {
             return false;
         }
 

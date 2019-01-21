@@ -104,7 +104,7 @@ public class Command extends CommandTreeBase {
             World world = sender.getEntityWorld();
             int cx = sender.getPosition().getX() >> 4;
             int cz = sender.getPosition().getZ() >> 4;
-            deposit.generate(world.rand, cx, cz, world, null, world.getChunkProvider(), true);
+            deposit.generate(world.rand, cx, cz, world, null, world.getChunkProvider());
         }
     }
 
@@ -224,7 +224,7 @@ public class Command extends CommandTreeBase {
                 LongSummaryStatistics stats = CoreGen.worldGen.getStats();
                 String avgus = String.format("%4.0f", stats.getAverage() * 1000);
                 CoreGen.logger.info("Global stats: {} chunks, {} / {} / {}", stats.getCount(),
-                                    stats.getMin(), stats.getAverage(), stats.getMax());
+                                    stats.getMin(), avgus, stats.getMax());
                 Command.notifyCommandListener(sender, this, "cmd.cg.get.stats.global", avgus);
                 return;
             }
@@ -238,7 +238,7 @@ public class Command extends CommandTreeBase {
             LongSummaryStatistics stats = deposit.getStats();
             String avgus = String.format("%4.0f", stats.getAverage() * 1000);
             CoreGen.logger.info("Deposit {} stats: {} chunks, {} / {} / {}", depositId, stats.getCount(),
-                                stats.getMin(), stats.getAverage(), stats.getMax());
+                                stats.getMin(), avgus, stats.getMax());
             Command.notifyCommandListener(sender, this, "cmd.cg.get.stats.deposit", depositId, avgus);
         }
     }

@@ -27,6 +27,7 @@ import net.minecraftforge.fml.common.IWorldGenerator;
 import java.util.DoubleSummaryStatistics;
 import java.util.LongSummaryStatistics;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class WorldGen implements IWorldGenerator {
 
@@ -48,20 +49,20 @@ public class WorldGen implements IWorldGenerator {
         // Walk through each deposit in the config
         for (Deposit d : CoreGen.config.getDeposits().values())
         {
-            // If the sample is greater than the chance of the chunk, no generation will be attempted
-            int sample = random.nextInt(100);
-            if (sample > d.getChunkChance()) {
+            // If the deposit can't be generated, move on to next deposit
+            if (!d.canGenerate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider)) {
                 continue;
             }
 
-            // Mark generated as true so timing information is captured. It's possible the
-            // deposit still won't generate (due to restrictions), but this is something we
-            // want to track the timing on as well
-            generated = true;
+            // Place a hold on the deposit so that any cascading chunks don't overlap
+            WorldData.addDeposit(world, d.getId(), chunkX, chunkZ);
 
-            // Do generation; if it succeeds, add a deposit to the world data so restrictions can be enforced
-            if (d.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider, false)) {
-                WorldData.addDeposit(world, d.getId(), chunkX, chunkZ);
+            // If the generation doesn't succeed, back out the change in the world data
+            if (!d.generate(random, chunkX, chunkZ, world, chunkGenerator, chunkProvider)) {
+                WorldData.deleteDeposit(world, d.getId(), chunkX, chunkZ);
+            } else {
+                // Generation succeeded; make sure we note that something generated this run
+                generated |= true;
             }
         }
 
