@@ -24,7 +24,9 @@ import net.minecraftforge.common.BiomeDictionary;
 import java.util.*;
 
 public class Restrictions {
-    private int minDepositDistance;
+    private int minDepositDistance = 0;
+    private int minSpawnDistance = 0; // Minimum distance from spawn
+    private int maxSpawnDistance = 0; // Maximum distance from spawn
 
     private Set<String> biomes;
     private BitSet      cachedBiomes;
@@ -37,6 +39,22 @@ public class Restrictions {
 
     public void setMinDepositDistance(int minDepositDistance) {
         this.minDepositDistance = minDepositDistance;
+    }
+
+    public int getMinSpawnDistance() {
+        return minSpawnDistance;
+    }
+
+    public void setMinSpawnDistance(int minSpawnDistance) {
+        this.minSpawnDistance = minSpawnDistance;
+    }
+
+    public int getMaxSpawnDistance() {
+        return maxSpawnDistance;
+    }
+
+    public void setMaxSpawnDistance(int maxSpawnDistance) {
+        this.maxSpawnDistance = maxSpawnDistance;
     }
 
     public List<String> getBiomes() {

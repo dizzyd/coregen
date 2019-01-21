@@ -19,6 +19,7 @@ package com.dizzyd.coregen.config;
 
 import com.dizzyd.coregen.feature.Feature;
 import com.dizzyd.coregen.world.WorldData;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -120,9 +121,24 @@ public class Deposit {
         }
 
         // Check for a min-distance restriction to see if this deposit
-        // is outside the range of any other deposits
+        // is outside the range of any other like deposits
         int minDepositDistance = restrictions.getMinDepositDistance();
         if (minDepositDistance > 0 && WorldData.depositInDistance(world, id, chunkX, chunkZ, minDepositDistance)) {
+            return false;
+        }
+
+        // Calculate the distance to spawn (in chunks)
+        // N.B. we convert distance to approximate chunks by dividing by 16
+        BlockPos spawnPos = world.getSpawnPoint();
+        double spawnDist = spawnPos.getDistance(chunkX * 16 + 8, spawnPos.getY(), chunkZ * 16 + 8) / 16;
+
+        // If we're too far away from spawn, generation is blocked
+        if (restrictions.getMaxSpawnDistance() > 0 && spawnDist > restrictions.getMaxSpawnDistance()) {
+            return false;
+        }
+
+        // If we're too close to spawn, generation is blocked
+        if (restrictions.getMinSpawnDistance() > 0 && spawnDist < restrictions.getMinSpawnDistance()) {
             return false;
         }
 
