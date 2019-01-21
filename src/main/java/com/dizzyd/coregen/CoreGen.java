@@ -72,7 +72,7 @@ public class CoreGen
         MinecraftForge.ORE_GEN_BUS.register(this);
 
         worldGen = new WorldGen();
-        GameRegistry.registerWorldGenerator(worldGen, 1000);
+        GameRegistry.registerWorldGenerator(worldGen, 500);
     }
 
     @EventHandler
