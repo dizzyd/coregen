@@ -61,6 +61,8 @@ public class Config {
 
         defaults = new HashMap<String, Object>();
         defaults.put("targets", new ArrayList<String>());
+        defaults.put("min-radius", 10);
+        defaults.put("max-radius", 30);
         defaults.put("sparse", false);
         defaultScriptFeature = ConfigFactory.parseMap(defaults);
     }
