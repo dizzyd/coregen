@@ -45,6 +45,8 @@ public class Config {
         defaults.put("restrictions.min-deposit-distance", 0);
         defaults.put("restrictions.biomes", new ArrayList<String>());
         defaults.put("restrictions.dimensions", Arrays.asList(0));
+        defaults.put("restrictions.max-spawn-distance", 0);
+        defaults.put("restrictions.min-spawn-distance", 0);
         defaultDeposit = ConfigFactory.parseMap(defaults);
 
         defaults = new HashMap<String, Object>();
