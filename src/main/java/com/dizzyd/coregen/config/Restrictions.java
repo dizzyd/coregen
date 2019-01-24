@@ -115,7 +115,7 @@ public class Restrictions {
         }
 
         // Check for biome by name
-        if (biomes.contains(b.getBiomeName())) {
+        if (biomes.contains(b.getRegistryName().getResourcePath())) {
             cachedBiomes.set(id);
         } else {
             // Check biomes type
