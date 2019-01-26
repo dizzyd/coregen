@@ -24,10 +24,8 @@ import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.fml.common.IWorldGenerator;
 
-import java.util.DoubleSummaryStatistics;
 import java.util.LongSummaryStatistics;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class WorldGen implements IWorldGenerator {
 

@@ -80,7 +80,8 @@ public class CoreGen
         installScripts(false);
 
         // Load the config AFTER we have installed included scripts
-        config = new Config(configDirectory);
+        config = new Config();
+        config.load(configDirectory);
         System.out.println(config);
     }
 
@@ -97,7 +98,8 @@ public class CoreGen
     }
 
     public static void reloadConfig() {
-        config = new Config(configDirectory);
+        config = new Config();
+        config.load(configDirectory);
     }
 
     static public void installScripts(boolean force) {

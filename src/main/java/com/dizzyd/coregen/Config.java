@@ -18,6 +18,7 @@
 package com.dizzyd.coregen;
 
 import com.dizzyd.coregen.config.Deposit;
+import com.dizzyd.coregen.feature.DefaultFeature;
 import com.dizzyd.coregen.feature.ScriptFeature;
 import com.dizzyd.coregen.util.WeightedBlockList;
 import com.dizzyd.coregen.ylevel.*;
@@ -26,6 +27,7 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValue;
 import net.minecraft.init.Blocks;
+import net.minecraft.world.gen.ChunkGeneratorSettings;
 import net.minecraftforge.event.terraingen.OreGenEvent;
 
 import java.io.File;
@@ -38,6 +40,7 @@ public class Config {
     static com.typesafe.config.Config defaultYLevels;
 
     static com.typesafe.config.Config defaultScriptFeature;
+    static com.typesafe.config.Config defaultDefaultFeature;
 
     static {
         HashMap<String, Object> defaults = new HashMap<String, Object>();
@@ -67,12 +70,18 @@ public class Config {
         defaults.put("max-radius", 30);
         defaults.put("sparse", false);
         defaultScriptFeature = ConfigFactory.parseMap(defaults);
+
+        defaults = new HashMap<String, Object>();
+        defaults.put("targets", new ArrayList<String>());
+        defaultDefaultFeature = ConfigFactory.parseMap(defaults);
     }
+
 
     private Map<String, Deposit> deposits = new HashMap<String, Deposit>();
     private Set<OreGenEvent.GenerateMinable.EventType> disabledOreGen = new HashSet<>();
+    private ChunkGeneratorSettings chunkGeneratorSettings = ChunkGeneratorSettings.Factory.jsonToFactory("").build();
 
-    public Config(File configDir) {
+    public void load(File configDir) {
         com.typesafe.config.Config cfg = ConfigFactory.parseFile(new File(configDir, "coregen.conf"));
         cfg = cfg.withFallback(defaultRoot);
 
@@ -88,18 +97,23 @@ public class Config {
 
             // Walk over the features, turning them into specific instances of Feature and adding to the deposit
             for (com.typesafe.config.Config featureCfg : depositCfg.getConfigList("features")) {
-                // Get the list of blocks to generate and turn it into a weighted list
-                WeightedBlockList blocks = getWeightedBlocks(featureCfg);
-
-                // Get the y-level controller
-                YLevelDistribution dist = getYLevelDist(featureCfg.getConfig("y-level"));
 
                 switch (featureCfg.getString("type")) {
                     case "script":
+                        // Get the list of blocks to generate and y-level controller
+                        WeightedBlockList blocks = getWeightedBlocks(featureCfg);
+                        YLevelDistribution dist = getYLevelDist(featureCfg.getConfig("y-level"));
+
                         featureCfg = featureCfg.withFallback(defaultScriptFeature);
                         ScriptFeature script = ConfigBeanFactory.create(featureCfg, ScriptFeature.class);
                         script.init(featureCfg, blocks, dist);
                         deposit.addFeature(script);
+                        break;
+                    case "default":
+                        featureCfg = featureCfg.withFallback(defaultDefaultFeature);
+                        DefaultFeature feature = ConfigBeanFactory.create(featureCfg, DefaultFeature.class);
+                        feature.init(featureCfg, null, null);
+                        deposit.addFeature(feature);
                         break;
                 }
             }
@@ -115,6 +129,10 @@ public class Config {
 
     public boolean isDefaultOreDisabled(OreGenEvent.GenerateMinable.EventType e) {
         return disabledOreGen.contains(e);
+    }
+
+    public ChunkGeneratorSettings getChunkGeneratorSettings() {
+        return chunkGeneratorSettings;
     }
 
     private WeightedBlockList getWeightedBlocks(com.typesafe.config.Config cfg) {
