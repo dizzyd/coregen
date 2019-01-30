@@ -384,6 +384,8 @@ public class Command extends CommandTreeBase {
                 }
                 CoreGen.logger.info("----");
                 Command.notifyCommandListener(sender, this, "cmd.cg.list.blocks.ok", count);
+            } else {
+                Command.notifyCommandListener(sender, this, "cmd.cg.list.blocks.noregex");
             }
         }
     }
