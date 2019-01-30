@@ -35,7 +35,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.common.BiomeDictionary;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.server.command.CommandTreeBase;
 import rx.Observable;
 
@@ -43,6 +46,7 @@ import java.io.*;
 import java.util.HashSet;
 import java.util.LongSummaryStatistics;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class Command extends CommandTreeBase {
     @Override
@@ -65,6 +69,8 @@ public class Command extends CommandTreeBase {
         addSubcommand(new FindDeposit());
         addSubcommand(new DumpDeposits());
         addSubcommand(new RunScript());
+        addSubcommand(new ListBlocks());
+        addSubcommand(new ListBiomes());
     }
 
     private static String getArg(String[] args, int id) {
@@ -345,6 +351,66 @@ public class Command extends CommandTreeBase {
             } else {
                 Command.notifyCommandListener(sender, this, "cmd.cg.script.missing.arg");
             }
+        }
+    }
+
+    public static class ListBlocks extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "list-blocks";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.list.blocks.usage";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            String regex = getArg(args, 0);
+            if (regex != null) {
+                // Compile the regex
+                Pattern p = Pattern.compile(regex);
+
+                // Traverse the block registry, printing out any blocks that match our regex
+                int count = 0;
+                CoreGen.logger.info("Starting listing of blocks matching: {}", regex);
+                for(Block b : ForgeRegistries.BLOCKS) {
+                    if (p.matcher(b.getRegistryName().toString()).matches()) {
+                        CoreGen.logger.info("* {}", b.getRegistryName().toString());
+                        count++;
+                    }
+                }
+                CoreGen.logger.info("----");
+                Command.notifyCommandListener(sender, this, "cmd.cg.list.blocks.ok", count);
+            }
+        }
+    }
+
+    public static class ListBiomes extends CommandBase {
+
+        @Override
+        public String getName() {
+            return "list-biomes";
+        }
+
+        @Override
+        public String getUsage(ICommandSender sender) {
+            return "cmd.cg.list.biomes.usage";
+        }
+
+        @Override
+        public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+            int count = 0;
+            CoreGen.logger.info("Starting list of biomes:");
+            for (Biome biome: ForgeRegistries.BIOMES) {
+                Set<BiomeDictionary.Type> biomeTypes = BiomeDictionary.getTypes(biome);
+                CoreGen.logger.info("* {}: {}", biome.getRegistryName().getResourcePath(), biomeTypes.toString());
+                count++;
+            }
+            CoreGen.logger.info("----");
+            Command.notifyCommandListener(sender, this, "cmd.cg.list.biomes.ok", count);
         }
     }
 
