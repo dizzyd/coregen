@@ -30,3 +30,10 @@ cmd.cg.dump.deposits.error=Unable to generate dump of deposits; see your server 
 
 cmd.cg.script=%s
 cmd.cg.script.missing.error=Missing script
+
+cmd.cg.list.blocks.usage=Print a list of blocks (filtered by regex) to the log file
+cmd.cg.list.blocks.ok=Listed %d blocks to the log file
+cmd.cg.list.blocks.noregex=list-blocks requires a regex
+
+cmd.cg.list.biomes.usage=Print a list of all biomes to the log file
+cmd.cg.list.biomes.ok=Listed %d biomes to the log file

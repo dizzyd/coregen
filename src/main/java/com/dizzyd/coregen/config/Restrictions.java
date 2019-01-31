@@ -20,8 +20,10 @@ package com.dizzyd.coregen.config;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.BiomeDictionary;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Restrictions {
     private int minDepositDistance = 0;
@@ -62,7 +64,9 @@ public class Restrictions {
     }
 
     public void setBiomes(List<String> biomes) {
-        this.biomes = new HashSet<String>(biomes);
+        // Use a Java stream to convert the list of strings into a set of lower-cased equivalents
+        this.biomes = biomes.stream().map(String::toLowerCase).collect(Collectors.toSet());
+
     }
 
     public List<Integer> getDimensions() {
@@ -77,8 +81,8 @@ public class Restrictions {
         // Walk over every biome and note if it's allowed
         if (!biomes.isEmpty()) {
             cachedBiomes = new BitSet();
-            for (Iterator<Biome> it = Biome.REGISTRY.iterator(); ((Iterator) it).hasNext();) {
-                cacheBiomeRestriction(it.next());
+            for (Biome b : ForgeRegistries.BIOMES) {
+                cacheBiomeRestriction(b);
             }
         }
     }
@@ -114,13 +118,13 @@ public class Restrictions {
             cachedBiomes.set(id);
         }
 
-        // Check for biome by name
-        if (biomes.contains(b.getRegistryName().getResourcePath())) {
+        // Check for biome by name (lower-casing it as necessary)
+        if (biomes.contains(b.getRegistryName().getResourcePath().toLowerCase())) {
             cachedBiomes.set(id);
         } else {
             // Check biomes type
             for (BiomeDictionary.Type t : biomeTypes) {
-                if (biomes.contains(t.getName())) {
+                if (biomes.contains(t.getName().toLowerCase())) {
                     cachedBiomes.set(id);
                     break;
                 }
