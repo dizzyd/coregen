@@ -62,6 +62,7 @@ public class Config {
         defaults.put("liquids", Arrays.asList(Blocks.WATER.getRegistryName().toString()));
         defaults.put("max", 128);
         defaults.put("min", 60);
+        defaults.put("clear-snow", false);
         defaultYLevels = ConfigFactory.parseMap(defaults);
 
         defaults = new HashMap<String, Object>();

@@ -16,6 +16,7 @@
 // ***************************************************************************
 package com.dizzyd.coregen.ylevel;
 
+import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -23,6 +24,7 @@ import net.minecraft.world.World;
 public class YLevelSurface extends YLevelDistribution {
 
     private int max;
+    private boolean clearSnow;
 
     public int getMax() {
         return max;
@@ -31,6 +33,15 @@ public class YLevelSurface extends YLevelDistribution {
     public void setMax(int max) {
         this.max = max;
     }
+
+    public boolean getClearSnow() {
+        return clearSnow;
+    }
+
+    public void setClearSnow(boolean clearSnow) {
+        this.clearSnow = clearSnow;
+    }
+
 
     @Override
     public int chooseLevel(World w, int x, int z) {
@@ -46,11 +57,18 @@ public class YLevelSurface extends YLevelDistribution {
             return 0;
         }
 
-        // Step back down to last non-air block
+        // Step back down to last non-air, non-liquid block
         p = p.down();
-        if (!w.getBlockState(p).isSideSolid(w, p, EnumFacing.UP)) {
-            // Top block is not solid on top; bail
+        if (w.getBlockState(p).getMaterial().isLiquid()) {
+            // Top block is a liquid; bail
             return 0;
+        }
+
+        // If the block is a snow layer and we have clear snow set, go ahead and clear the snow
+        // and step down one more block
+        if (clearSnow && w.getBlockState(p).getBlock() == Blocks.SNOW_LAYER) {
+            w.setBlockToAir(p);
+            p = p.down();
         }
 
         return p.getY();
