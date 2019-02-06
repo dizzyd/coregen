@@ -35,7 +35,6 @@ import java.util.HashMap;
 public class WorldData extends WorldSavedData {
 
     private static final String IDENTIFIER = WorldData.class.getName();
-    private static HashMap<Integer, WorldData> DIMENSIONS = new HashMap<Integer, WorldData>();
 
     private RTree<String, Point> deposits = RTree.create();
 
@@ -81,19 +80,13 @@ public class WorldData extends WorldSavedData {
     }
 
     private static WorldData load(World world) {
-        WorldData data = DIMENSIONS.getOrDefault(world.provider.getDimension(), null);
+        // No world-data available; load or create it
+        WorldData data = (WorldData) world.getPerWorldStorage().getOrLoadData(WorldData.class, IDENTIFIER);
         if (data == null) {
-            // No world-data available; load or create it
-            data = (WorldData) world.getPerWorldStorage().getOrLoadData(WorldData.class, IDENTIFIER);
-            if (data == null) {
-                // No data was ever available; create one
-                data = new WorldData(IDENTIFIER);
-                world.getPerWorldStorage().setData(IDENTIFIER, data);
-            }
-
-            DIMENSIONS.put(world.provider.getDimension(), data);
+            // No data was ever available; create one
+            data = new WorldData(IDENTIFIER);
+            world.getPerWorldStorage().setData(IDENTIFIER, data);
         }
-
         return data;
     }
 
@@ -106,6 +99,14 @@ public class WorldData extends WorldSavedData {
     public static synchronized void deleteDeposit(World world, String depositId, int cx, int cz) {
         WorldData wd = load(world);
         wd.deposits = wd.deposits.delete(depositId, Geometries.point(cx, cz));
+        wd.markDirty();
+    }
+
+    public static synchronized void deleteAllDeposits(World world, int cx, int cz) {
+        WorldData wd = load(world);
+        for (Entry e : wd.deposits.search(Geometries.point(cx, cz)).toBlocking().toIterable()) {
+            wd.deposits = wd.deposits.delete(e);
+        }
         wd.markDirty();
     }
 
