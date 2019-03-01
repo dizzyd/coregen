@@ -27,6 +27,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.terraingen.OreGenEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.*;
@@ -76,6 +77,7 @@ public class CoreGen
     public void init(FMLInitializationEvent event)
     {
         MinecraftForge.ORE_GEN_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(this);
 
         worldGen = new WorldGen();
         GameRegistry.registerWorldGenerator(worldGen, 500);
@@ -96,16 +98,11 @@ public class CoreGen
         event.registerServerCommand(new Command());
     }
 
-    @EventHandler
-    public void onServerStarted(FMLServerStartedEvent event) {
-        for (IntSortedSet s : DimensionManager.getRegisteredDimensions().values()) {
-            for (Integer id : s) {
-                CoreGen.logger.info("Reconciling chunks for dimension {}", id);
-                WorldData.reconcileMissingChunks(DimensionManager.getWorld(id));
-            }
-        }
+    @SubscribeEvent
+    public void onWorldLoad(WorldEvent.Load event) {
+        CoreGen.logger.info("Reconciling chunks for dimension {}", event.getWorld().provider.getDimension());
+        WorldData.reconcileMissingChunks(event.getWorld());
     }
-
 
     @SubscribeEvent
     public void onGenerateMineable(OreGenEvent.GenerateMinable event) {
