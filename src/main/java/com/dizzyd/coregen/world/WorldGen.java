@@ -44,9 +44,6 @@ public class WorldGen implements IWorldGenerator {
         boolean generated = false;
         long startTime = System.currentTimeMillis();
 
-        // Ensure there are no stale entries in the deposit R-Tree for this chunk
-        WorldData.deleteAllDeposits(world, chunkX, chunkZ);
-
         // Walk through each deposit in the config
         for (Deposit d : CoreGen.config.getDeposits().values())
         {

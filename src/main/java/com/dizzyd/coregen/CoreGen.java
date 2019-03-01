@@ -18,22 +18,26 @@
 package com.dizzyd.coregen;
 
 import com.dizzyd.coregen.util.ScriptUtil;
+import com.dizzyd.coregen.world.WorldData;
 import com.dizzyd.coregen.world.WorldGen;
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import net.minecraft.launchwrapper.Launch;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.terraingen.OreGenEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Logger;
+import org.mozilla.javascript.tools.debugger.Dim;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -57,6 +61,8 @@ public class CoreGen
     public static WorldGen worldGen;
 
     private static File configDirectory;
+
+    private MinecraftServer server;
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event)
@@ -85,10 +91,21 @@ public class CoreGen
         System.out.println(config);
     }
 
-    @Mod.EventHandler
+    @EventHandler
     public void onServerStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new Command());
     }
+
+    @EventHandler
+    public void onServerStarted(FMLServerStartedEvent event) {
+        for (IntSortedSet s : DimensionManager.getRegisteredDimensions().values()) {
+            for (Integer id : s) {
+                CoreGen.logger.info("Reconciling chunks for dimension {}", id);
+                WorldData.reconcileMissingChunks(DimensionManager.getWorld(id));
+            }
+        }
+    }
+
 
     @SubscribeEvent
     public void onGenerateMineable(OreGenEvent.GenerateMinable event) {

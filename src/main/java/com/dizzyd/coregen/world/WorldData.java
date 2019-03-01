@@ -20,6 +20,7 @@ package com.dizzyd.coregen.world;
 import com.dizzyd.coregen.CoreGen;
 import com.github.davidmoten.rtree.*;
 import com.github.davidmoten.rtree.geometry.Geometries;
+import com.github.davidmoten.rtree.geometry.Geometry;
 import com.github.davidmoten.rtree.geometry.Point;
 import com.github.davidmoten.rtree.internal.Comparators;
 import net.minecraft.nbt.NBTTagByteArray;
@@ -27,6 +28,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.WorldSavedData;
 
 import java.io.*;
@@ -88,6 +90,24 @@ public class WorldData extends WorldSavedData {
             world.getPerWorldStorage().setData(IDENTIFIER, data);
         }
         return data;
+    }
+
+    public static synchronized void reconcileMissingChunks(World world) {
+        // Copy over all the RTree entries that actually have existing chunks in them
+        // TODO: Reconsider if a more efficient save format would improve memory usage
+        WorldData data = (WorldData) world.getPerWorldStorage().getOrLoadData(WorldData.class, IDENTIFIER);
+        if (data != null) {
+            RTree<String, Point> newDeposits = RTree.create();
+            Iterable<Entry<String, Point>> it = data.deposits.entries().filter(e ->
+                world.isChunkGeneratedAt((int)e.geometry().x(), (int)e.geometry().y())).
+                    toBlocking().toIterable();
+            for(Entry<String,Point> e : it) {
+                newDeposits = newDeposits.add(e);
+            }
+            CoreGen.logger.info("{} missing chunks dropped", data.deposits.size() - newDeposits.size());
+            data.deposits = newDeposits;
+            data.markDirty();
+        }
     }
 
     public static synchronized void addDeposit(World world, String depositId, int cx, int cz) {
